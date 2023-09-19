@@ -21,7 +21,8 @@ cors: "^2.8.5"
 express: "^4.18.2"
 pg: "^8.11.3"
 
-npm install body-parser@^1.20.2 cors@^2.8.5 express@^4.18.2 pg@^8.11.3
+      ```bash
+      npm install body-parser@^1.20.2 cors@^2.8.5 express@^4.18.2 pg@^8.11.3
 
 
 Devdependencias
@@ -29,4 +30,5 @@ Este proyecto utiliza la siguiente devdependencia para facilitar el desarrollo:
 
 nodemon: "^3.0.1"
 
-npm install nodemon --save-dev
+   ```bash
+   npm install nodemon --save-dev
