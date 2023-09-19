@@ -1,6 +1,6 @@
 # Servidor
 
-Este es un proyecto de servidor que proporciona una descripción corta de lo que hace.
+Este es un proyecto de servidor para el backend de un sistema.
 
 ## Instalación
 
