@@ -200,11 +200,11 @@ INSERT INTO Producto (nombre, stock, precio, tiempo, estado, id_categoria) VALUE
 -- Registros para la tabla Pedido con hora específica.
 -- Los registros no serán necesarios gracias a la función CURRENT_TIMESTAMP
 INSERT INTO Pedido (num_pedido, fecha, hora, id_usuario, id_mesa, id_cliente) VALUES
-(1, '2023-09-09', '12:30:00', 1, 1, 1),
-(2, '2023-09-09', '13:15:00', 2, 2, 2),
-(3, '2023-09-09', '14:00:00', 3, 3, 3),
-(4, '2023-09-10', '18:45:00', 1, 4, 4),
-(5, '2023-09-10', '19:30:00', 2, 5, 5);
+(1, 1, 1, 1),
+(2, 2, 2, 2),
+(3, 3, 3, 3),
+(4, 1, 4, 4),
+(5, 2, 5, 5);
 
 -- Registros para la tabla Pedido_Producto
 INSERT INTO Pedido_Producto (id_pedido, id_producto) VALUES
