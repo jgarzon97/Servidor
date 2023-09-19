@@ -45,7 +45,7 @@ async function getPedido(req, res) {
 async function createPedido(req, res) {
     const { num_pedido, id_usuario, id_mesa, id_cliente } = req.body;
     const query = 'INSERT INTO Pedido (num_pedido, id_usuario, id_mesa, id_cliente) VALUES ($1, $2, $3, $4)';
-    const values = [ num_pedido, id_usuario, id_mesa, id_cliente ];
+    const values = [num_pedido, id_usuario, id_mesa, id_cliente];
     try {
         const client = await pool.connect();
         const result = await client.query(query, values);
@@ -89,6 +89,30 @@ async function createUsuario(req, res) {
         res.status(500).json({ error: "Error en el servidor" });
     }
 }
+
+async function autenticarUsuario(req, res) {
+    try {
+        const { usuario, password } = req.body;
+
+        // Realizar una consulta SQL para verificar las credenciales en la base de datos
+        const query = 'SELECT * FROM Usuario WHERE user_usuario = $1 AND pass_usuario = $2';
+        const values = [usuario, password];
+        const result = await pool.query(query, values);
+
+        // Verificar si se encontró un usuario con esas credenciales
+        if (result.rows.length === 1) {
+            // Usuario autenticado con éxito
+            res.status(200).json({ mensaje: 'Autenticación exitosa', usuario: result.rows[0] });
+        } else {
+            // Credenciales incorrectas
+            res.status(401).json({ error: 'Credenciales incorrectas' });
+        }
+    } catch (error) {
+        console.error('Error al autenticar usuario:', error);
+        res.status(500).json({ error: 'Error en el servidor' });
+    }
+}
+
 
 async function getProductos(req, res) {
     try {
@@ -168,6 +192,7 @@ module.exports = {
     createPedido,
     getUsuarios,
     createUsuario,
+    autenticarUsuario,
     getProductos,
     createProducto,
     getMesas,
