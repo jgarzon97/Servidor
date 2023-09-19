@@ -11,7 +11,7 @@ Asegúrate de tener [Node.js](https://nodejs.org/) instalado en tu sistema.
 3. Ejecuta el siguiente comando para instalar las dependencias:
 
    ```bash
-      npm install
+   npm install
 
 Dependencias
 Este proyecto utiliza las siguientes dependencias:
