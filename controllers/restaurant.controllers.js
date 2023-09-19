@@ -90,29 +90,55 @@ async function createUsuario(req, res) {
     }
 }
 
+const bcrypt = require('bcrypt');
+
 async function autenticarUsuario(req, res) {
     try {
         const { usuario, password } = req.body;
 
-        // Realizar una consulta SQL para verificar las credenciales en la base de datos
-        const query = 'SELECT * FROM Usuario WHERE user_usuario = $1 AND pass_usuario = $2';
-        const values = [usuario, password];
-        const result = await pool.query(query, values);
+        // Realizar una consulta SQL para obtener la contraseña almacenada en la base de datos
+        const query = 'SELECT * FROM Usuario WHERE user_usuario = $1';
+        const result = await pool.query(query, [usuario]);
 
-        // Verificar si se encontró un usuario con esas credenciales
+        // Verificar si se encontró un usuario con ese nombre de usuario
         if (result.rows.length === 1) {
-            // Usuario autenticado con éxito
-            res.status(200).json({ mensaje: 'Autenticación exitosa', usuario: result.rows[0] });
+            const user = result.rows[0];
+
+            // Verificar la contraseña utilizando bcrypt
+            bcrypt.compare(password, user.pass_usuario, (err, passwordMatch) => {
+                if (err) {
+                    // Error en la comparación de contraseñas
+                    res.status(500).json({ error: 'Error en el servidor', detalle: err.message });
+                } else if (passwordMatch) {
+                    // Usuario autenticado con éxito
+                    res.status(200).json({ mensaje: 'Autenticación exitosa', usuario: user });
+                } else {
+                    // Credenciales incorrectas
+                    res.status(401).json({ error: 'Credenciales incorrectas' });
+                }
+            });
         } else {
-            // Credenciales incorrectas
-            res.status(401).json({ error: 'Credenciales incorrectas' });
+            // Usuario no encontrado
+            res.status(401).json({ error: 'Usuario no encontrado' });
         }
     } catch (error) {
         console.error('Error al autenticar usuario:', error);
-        res.status(500).json({ error: 'Error en el servidor' });
+        res.status(500).json({ error: 'Error en el servidor', detalle: error.message });
     }
 }
 
+
+async function getCategorias(req, res) {
+    try {
+        const client = await pool.connect();
+        const result = await client.query('SELECT * FROM Categoria');
+        client.release();
+        res.json(result.rows);
+    } catch (error) {
+        console.error('Error al obtener los productos:', error);
+        res.status(500).json({ error: "Error en el servidor" });
+    }
+}
 
 async function getProductos(req, res) {
     try {
@@ -187,15 +213,23 @@ async function getClientes(req, res) {
 }
 
 module.exports = {
+    // Pedido
     getPedido,
     getPedidos,
     createPedido,
+    // Usuario
     getUsuarios,
     createUsuario,
     autenticarUsuario,
+    // Categoria
+    getCategorias,
+    // Producto
     getProductos,
     createProducto,
+    // Mesa
     getMesas,
+    // Factura
     createFactura,
+    // Cliente
     getClientes
 };
