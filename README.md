@@ -11,7 +11,7 @@ Asegúrate de tener [Node.js](https://nodejs.org/) instalado en tu sistema.
 3. Ejecuta el siguiente comando para instalar las dependencias:
 
    ```bash
-   npm install
+      npm install
 
 Dependencias
 Este proyecto utiliza las siguientes dependencias:
@@ -21,14 +21,11 @@ cors: "^2.8.5"
 express: "^4.18.2"
 pg: "^8.11.3"
 
-      ```bash
       npm install body-parser@^1.20.2 cors@^2.8.5 express@^4.18.2 pg@^8.11.3
-
 
 Devdependencias
 Este proyecto utiliza la siguiente devdependencia para facilitar el desarrollo:
 
 nodemon: "^3.0.1"
 
-   ```bash
-   npm install nodemon --save-dev
+      npm install nodemon --save-dev
