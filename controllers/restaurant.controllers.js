@@ -182,6 +182,18 @@ async function getMesas(req, res) {
     }
 }
 
+async function getFactura(req, res) {
+    try {
+        const client = await pool.connect();
+        const result = await client.query('SELECT * FROM Factura');
+        client.release();
+        res.json(result.rows);
+    } catch (error) {
+        console.error('Error al obtener las facturas:', error);
+        res.status(500).json({ error: "Error en el servidor" });
+    }
+}
+
 async function createFactura(req, res) {
     const { numero, fecha, total, estado_de_pago, id_pedido } = req.body;
     const query = 'INSERT INTO Factura (numero, fecha, total, estado_de_pago, id_pedido) VALUES ($1, $2, $3, $4, $5)';
@@ -212,6 +224,25 @@ async function getClientes(req, res) {
     }
 }
 
+async function createPedido_Producto(req, res) {
+    const { id_pedido, id_producto, cantidad } = req.body;
+    const query = 'INSERT INTO pedido_producto (id_pedido, id_producto, cantidad) VALUES ($1, $2, $3)';
+    const values = [id_pedido, id_producto, cantidad];
+    try {
+        const client = await pool.connect();
+        const result = await client.query(query, values);
+        client.release();
+        if (result.rowCount > 0) {
+            res.status(200).json({ message: 'Se guardaron los detalles del Pedido' });
+        } else {
+            res.status(400).json({ message: 'No se guardaron los detalles del Pedido' });
+        }
+    } catch (err) {
+        res.status(500).json({ error: "Error en el servidor" });
+    }
+}
+
+
 module.exports = {
     // Pedido
     getPedido,
@@ -223,13 +254,16 @@ module.exports = {
     autenticarUsuario,
     // Categoria
     getCategorias,
-    // Producto
-    getProductos,
-    createProducto,
     // Mesa
     getMesas,
     // Factura
+    getFactura,
     createFactura,
     // Cliente
-    getClientes
+    getClientes,
+    // Producto
+    getProductos,
+    createProducto,
+    // Pedido_Producto
+    createPedido_Producto
 };

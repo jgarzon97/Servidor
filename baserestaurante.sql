@@ -58,6 +58,7 @@ CREATE TABLE Pedido (
     id_usuario INT,
     id_mesa INT,
     id_cliente INT,
+    estado VARCHAR(100) SET DEFAULT 'Pendiente',
     FOREIGN KEY (id_usuario) REFERENCES Usuario(id_usuario),
     FOREIGN KEY (id_mesa) REFERENCES Mesa(id_mesa),
     FOREIGN KEY (id_cliente) REFERENCES Cliente(id_cliente)
@@ -76,12 +77,22 @@ CREATE TABLE Factura (
     numero VARCHAR(100) NOT NULL,
     fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     total DECIMAL(10, 2),
-    estado_de_pago VARCHAR(100),
+    estado_de_pago VARCHAR(100) DEFAULT 'Cancelado', -- Establece el valor predeterminado en 'Cancelado'
     id_pedido INT,
-    FOREIGN KEY (id_pedido) REFERENCES Pedido(id_pedido)
+    FOREIGN KEY (id_pedido) REFERENCES Pedido(id_pedido),
+    CONSTRAINT uk_id_pedido UNIQUE (id_pedido)
 );
 
+-- Actualizar registros existentes para establecer valores predeterminados
+UPDATE Factura
+SET fecha = CURRENT_TIMESTAMP,
+    estado_de_pago = 'Cancelado'
+WHERE fecha IS NULL OR estado_de_pago IS NULL;
+
+
 -- FUNCTIONS & TRIGGERS
+
+-- FUNCION PARA LIBERAR MESAS
 CREATE OR REPLACE FUNCTION liberar_mesa_y_crear_factura()
 RETURNS TRIGGER AS $$
 DECLARE
@@ -103,6 +114,51 @@ AFTER INSERT ON Factura
 FOR EACH ROW
 EXECUTE FUNCTION liberar_mesa_y_crear_factura();
 
+--
+CREATE OR REPLACE FUNCTION actualizar_estado_pedido()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Verificar si la factura está asociada a un pedido
+    IF NEW.id_pedido IS NOT NULL THEN
+        -- Actualizar el estado del pedido a "Cancelado"
+        UPDATE Pedido
+        SET estado = 'Cancelado'
+        WHERE id_pedido = NEW.id_pedido;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER tr_actualizar_estado_pedido
+AFTER INSERT ON Factura
+FOR EACH ROW
+EXECUTE FUNCTION actualizar_estado_pedido();
+
+--
+CREATE OR REPLACE FUNCTION actualizar_total_factura()
+RETURNS TRIGGER AS $$
+DECLARE
+    total_pedido DECIMAL(10, 2);
+BEGIN
+    -- Calcular la suma de los precios de los productos asociados al pedido en la factura
+    SELECT COALESCE(SUM(Producto.precio), 0)
+    INTO total_pedido
+    FROM Pedido_Producto
+    JOIN Producto ON Pedido_Producto.id_producto = Producto.id_producto
+    WHERE Pedido_Producto.id_pedido = NEW.id_pedido;
+
+    -- Actualizar el campo 'total' en la factura
+    NEW.total := total_pedido;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER tr_actualizar_total_factura
+BEFORE INSERT ON Factura
+FOR EACH ROW
+EXECUTE FUNCTION actualizar_total_factura();
+
+
 -- FUNCION PARA MARCAR OCUPADA UNA MESA
 CREATE OR REPLACE FUNCTION marcar_mesa_como_ocupada()
 RETURNS TRIGGER AS $$
@@ -118,6 +174,90 @@ CREATE TRIGGER tr_mesa_ocupada
 AFTER INSERT ON Pedido
 FOR EACH ROW
 EXECUTE FUNCTION marcar_mesa_como_ocupada();
+
+
+--
+CREATE OR REPLACE FUNCTION actualizar_stock_y_estado()
+RETURNS TRIGGER AS $$
+DECLARE
+    cantidad_pedido INT;
+BEGIN
+    -- Obtener la cantidad de productos pedidos
+    SELECT NEW.cantidad INTO cantidad_pedido;
+
+    -- Verificar si hay suficientes productos en stock
+    IF cantidad_pedido > 0 THEN
+        -- Restar la cantidad pedida del stock del producto
+        UPDATE Producto
+        SET stock = stock - cantidad_pedido
+        WHERE id_producto = NEW.id_producto;
+
+        -- Actualizar el estado del producto a "Agotado" si el stock es igual o menor a cero
+        UPDATE Producto
+        SET estado = CASE WHEN stock <= 0 THEN 'Agotado' ELSE 'Disponible' END
+        WHERE id_producto = NEW.id_producto;
+
+        -- Actualizar el estado del pedido si el producto se agotó
+        IF NEW.cantidad > (SELECT stock FROM Producto WHERE id_producto = NEW.id_producto) THEN
+            UPDATE Pedido
+            SET estado = 'Cancelado'
+            WHERE id_pedido = NEW.id_pedido;
+        END IF;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_actualizar_stock_y_estado
+AFTER INSERT ON Pedido_Producto
+FOR EACH ROW
+EXECUTE FUNCTION actualizar_stock_y_estado();
+
+CREATE OR REPLACE FUNCTION actualizar_estado_pedido()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Verificar si el pedido está asociado a la factura
+    IF NEW.id_pedido IS NOT NULL THEN
+        -- Actualizar el estado del pedido a "Cancelado" cuando se genera la factura
+        UPDATE Pedido
+        SET estado = 'Cancelado'
+        WHERE id_pedido = NEW.id_pedido;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_actualizar_estado_pedido
+AFTER INSERT ON Factura
+FOR EACH ROW
+EXECUTE FUNCTION actualizar_estado_pedido();
+
+
+CREATE OR REPLACE FUNCTION verificar_estado_mesa()
+RETURNS TRIGGER AS $$
+DECLARE
+    estado_mesa VARCHAR(100);
+BEGIN
+    -- Obtener el estado de la mesa
+    SELECT estado INTO estado_mesa
+    FROM Mesa
+    WHERE id_mesa = NEW.id_mesa;
+
+    -- Verificar si la mesa está ocupada
+    IF estado_mesa = 'Ocupada' THEN
+        RAISE EXCEPTION 'La mesa está ocupada. No se puede realizar un pedido.';
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_verificar_estado_mesa
+BEFORE INSERT ON Pedido
+FOR EACH ROW
+EXECUTE FUNCTION verificar_estado_mesa();
+
 
 -- INSERTS
 
@@ -140,9 +280,9 @@ INSERT INTO Usuario (user_usuario, pass_usuario, nombre_user, apellido_user, id_
 -- Ingreso de Mesas
 INSERT INTO Mesa (num_mesa, capacidad, estado) VALUES
 (1, 4, 'Disponible'),
-(2, 6, 'Ocupada'),
+(2, 6, 'Disponible'),
 (3, 2, 'Disponible'),
-(4, 8, 'Reservada'),
+(4, 8, 'Disponible'),
 (5, 4, 'Disponible');
 
 -- Ingreso de Clientes
@@ -194,12 +334,12 @@ INSERT INTO Producto (nombre, stock, precio, tiempo, estado, id_categoria) VALUE
 INSERT INTO Producto (nombre, stock, precio, tiempo, estado, id_categoria) VALUES
 ('Café Espresso', 40, 2.99, '00:02:00', 'Disponible', 5),
 ('Tostadas con Mermelada', 30, 4.49, '00:05:00', 'Disponible', 5),
-('Huevos Revueltos', 25, 6.99, '00:08:00', 'Disponible', 5);
+('Huevos Revueltos', 25, 6.99, '00:08:00', 'Disponible', 5),
 ('Tigrillo', 20, 5.00, '00:10:00', 'Disponible', 5);
 
 -- Registros para la tabla Pedido con hora específica.
 -- Los registros no serán necesarios gracias a la función CURRENT_TIMESTAMP
-INSERT INTO Pedido (num_pedido, fecha, hora, id_usuario, id_mesa, id_cliente) VALUES
+INSERT INTO Pedido (num_pedido, id_usuario, id_mesa, id_cliente) VALUES
 (1, 1, 1, 1),
 (2, 2, 2, 2),
 (3, 3, 3, 3),
