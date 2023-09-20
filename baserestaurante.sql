@@ -42,7 +42,7 @@ CREATE TABLE Categoria (
 CREATE TABLE Producto (
     id_producto SERIAL PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
-    stock INT,
+    stock INT CHECK (precio > 0),
     precio DECIMAL(10, 2),
     tiempo TIME,
     estado VARCHAR(100),
@@ -58,16 +58,16 @@ CREATE TABLE Pedido (
     id_usuario INT,
     id_mesa INT,
     id_cliente INT,
-    estado VARCHAR(100) SET DEFAULT 'Pendiente',
+    estado VARCHAR(100) DEFAULT 'Pendiente',
     FOREIGN KEY (id_usuario) REFERENCES Usuario(id_usuario),
     FOREIGN KEY (id_mesa) REFERENCES Mesa(id_mesa),
     FOREIGN KEY (id_cliente) REFERENCES Cliente(id_cliente)
 );
 
 CREATE TABLE Pedido_Producto (
-    id_pedido_producto SERIAL PRIMARY KEY,
     id_pedido INT,
     id_producto INT,
+    cantidad INT,
     FOREIGN KEY (id_pedido) REFERENCES Pedido(id_pedido),
     FOREIGN KEY (id_producto) REFERENCES Producto(id_producto)
 );
@@ -77,186 +77,145 @@ CREATE TABLE Factura (
     numero VARCHAR(100) NOT NULL,
     fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     total DECIMAL(10, 2),
-    estado_de_pago VARCHAR(100) DEFAULT 'Cancelado', -- Establece el valor predeterminado en 'Cancelado'
+    estado_de_pago VARCHAR(100) DEFAULT 'Cancelado',
     id_pedido INT,
     FOREIGN KEY (id_pedido) REFERENCES Pedido(id_pedido),
     CONSTRAINT uk_id_pedido UNIQUE (id_pedido)
 );
 
--- Actualizar registros existentes para establecer valores predeterminados
-UPDATE Factura
-SET fecha = CURRENT_TIMESTAMP,
-    estado_de_pago = 'Cancelado'
-WHERE fecha IS NULL OR estado_de_pago IS NULL;
 
-
--- FUNCTIONS & TRIGGERS
-
--- FUNCION PARA LIBERAR MESAS
-CREATE OR REPLACE FUNCTION liberar_mesa_y_crear_factura()
-RETURNS TRIGGER AS $$
-DECLARE
-    mesa_id INT;
+-- Trigger que actualiza el estado de la mesa a "Ocupada"
+-- cuando se inserte un nuevo pedido en la tabla Pedido.
+CREATE FUNCTION actualizar_estado_mesa()
+    RETURNS TRIGGER AS $$
 BEGIN
-    -- Obtener el ID de la mesa asociada al pedido
-    SELECT id_mesa INTO mesa_id FROM Pedido WHERE id_pedido = NEW.id_pedido;
-
-    -- Actualizar el estado de la mesa a "Disponible"
-    UPDATE Mesa SET estado = 'Disponible' WHERE id_mesa = mesa_id;
+    -- Actualizar el estado de la mesa a "Ocupada" solo si no es "Ocupada" actualmente.
+    UPDATE Mesa
+    SET estado = 'Ocupada'
+    WHERE id_mesa = NEW.id_mesa AND estado != 'Ocupada';
 
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
--- TRIGGER PARA LIBERAR LA MESA LUEGO DELA FACTURA
-CREATE TRIGGER tr_generar_factura
-AFTER INSERT ON Factura
+-- Trigger para que se active después de una inserción en la tabla Pedido.
+CREATE TRIGGER pedido_insert
+AFTER INSERT ON Pedido
 FOR EACH ROW
-EXECUTE FUNCTION liberar_mesa_y_crear_factura();
+EXECUTE FUNCTION actualizar_estado_mesa();
 
---
-CREATE OR REPLACE FUNCTION actualizar_estado_pedido()
-RETURNS TRIGGER AS $$
+
+-- Trigger que actualiza el stock de los productos y genere una alerta
+-- cuando se inserte un nuevo registro en la tabla Pedido_Producto.
+CREATE OR REPLACE FUNCTION actualizar_stock_producto()
+    RETURNS TRIGGER AS $$
 BEGIN
-    -- Verificar si la factura está asociada a un pedido
-    IF NEW.id_pedido IS NOT NULL THEN
-        -- Actualizar el estado del pedido a "Cancelado"
-        UPDATE Pedido
-        SET estado = 'Cancelado'
-        WHERE id_pedido = NEW.id_pedido;
+    -- Actualizar el stock restando la cantidad del pedido.
+    UPDATE Producto
+    SET stock = stock - NEW.cantidad
+    WHERE id_producto = NEW.id_producto
+    AND stock >= NEW.cantidad;
+
+    -- Verificar si se realizó la actualización del stock.
+    IF FOUND THEN
+        RETURN NEW;
+    ELSE
+        -- Generar una alerta si el stock es menor que 0.
+        RAISE EXCEPTION 'Alerta: Stock de producto (%s) es menor que 0', NEW.id_producto;
     END IF;
+
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger para que se active después de una inserción en la tabla Pedido_Producto.
+CREATE TRIGGER pedido_producto_insert
+AFTER INSERT ON Pedido_Producto
+FOR EACH ROW
+EXECUTE FUNCTION actualizar_stock_producto();
+
+
+CREATE OR REPLACE FUNCTION calcular_total_factura()
+    RETURNS TRIGGER AS $$
+BEGIN
+    -- Actualizar el campo "total" en la tabla Factura basado en la sumatoria de los productos en Pedido_Producto.
+    UPDATE Factura
+    SET total = (
+        SELECT SUM(precio * cantidad)
+        FROM Producto
+        JOIN Pedido_Producto ON Producto.id_producto = Pedido_Producto.id_producto
+        WHERE Pedido_Producto.id_pedido = NEW.id_pedido
+    ),
+    estado_de_pago = 'Cancelado' -- Establecer el estado_de_pago en 'Cancelado'
+    WHERE id_factura = NEW.id_factura;
+
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER tr_actualizar_estado_pedido
+-- Trigger para que se active después de una inserción en la tabla Factura.
+CREATE TRIGGER calcular_total_factura_trigger
 AFTER INSERT ON Factura
 FOR EACH ROW
-EXECUTE FUNCTION actualizar_estado_pedido();
-
---
-CREATE OR REPLACE FUNCTION actualizar_total_factura()
-RETURNS TRIGGER AS $$
-DECLARE
-    total_pedido DECIMAL(10, 2);
-BEGIN
-    -- Calcular la suma de los precios de los productos asociados al pedido en la factura
-    SELECT COALESCE(SUM(Producto.precio), 0)
-    INTO total_pedido
-    FROM Pedido_Producto
-    JOIN Producto ON Pedido_Producto.id_producto = Producto.id_producto
-    WHERE Pedido_Producto.id_pedido = NEW.id_pedido;
-
-    -- Actualizar el campo 'total' en la factura
-    NEW.total := total_pedido;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER tr_actualizar_total_factura
-BEFORE INSERT ON Factura
-FOR EACH ROW
-EXECUTE FUNCTION actualizar_total_factura();
+EXECUTE FUNCTION calcular_total_factura();
 
 
--- FUNCION PARA MARCAR OCUPADA UNA MESA
+DROP TRIGGER IF EXISTS pedido_insert ON Pedido;
+
 CREATE OR REPLACE FUNCTION marcar_mesa_como_ocupada()
-RETURNS TRIGGER AS $$
+    RETURNS TRIGGER AS $$
 BEGIN
-    -- Actualizar el estado de la mesa a "ocupada"
-    UPDATE Mesa SET estado = 'Ocupada' WHERE id_mesa = NEW.id_mesa;
+    -- Actualizar el estado de la mesa a "ocupada" solo si no es "ocupada" actualmente.
+    IF NEW.estado != 'ocupada' THEN
+        UPDATE Mesa
+        SET estado = 'ocupada'
+        WHERE id_mesa = NEW.id_mesa;
+    END IF;
+
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
--- TRIGGER PARA MARCAR OCUPADA UNA MESA LUEGO DE UN PEDIDO
-CREATE TRIGGER tr_mesa_ocupada
+-- Crear el trigger para que se active después de una inserción en la tabla Pedido.
+CREATE TRIGGER pedido_insert
 AFTER INSERT ON Pedido
 FOR EACH ROW
 EXECUTE FUNCTION marcar_mesa_como_ocupada();
 
 
---
-CREATE OR REPLACE FUNCTION actualizar_stock_y_estado()
-RETURNS TRIGGER AS $$
-DECLARE
-    cantidad_pedido INT;
+-- Crear un trigger que cambie el estado del pedido a 'Cancelado' cuando se genere una factura.
+CREATE OR REPLACE FUNCTION generar_factura()
+    RETURNS TRIGGER AS $$
 BEGIN
-    -- Obtener la cantidad de productos pedidos
-    SELECT NEW.cantidad INTO cantidad_pedido;
+    -- Actualizar el estado del pedido a 'Cancelado' y el estado_de_pago a 'Cancelado' en la factura.
+    UPDATE Pedido
+    SET estado = 'Cancelado'
+    WHERE id_pedido = NEW.id_pedido;
 
-    -- Verificar si hay suficientes productos en stock
-    IF cantidad_pedido > 0 THEN
-        -- Restar la cantidad pedida del stock del producto
-        UPDATE Producto
-        SET stock = stock - cantidad_pedido
-        WHERE id_producto = NEW.id_producto;
+    -- Actualizar el estado_de_pago a 'Cancelado' en la factura.
+    UPDATE Factura
+    SET estado_de_pago = 'Cancelado'
+    WHERE id_factura = NEW.id_factura;
 
-        -- Actualizar el estado del producto a "Agotado" si el stock es igual o menor a cero
-        UPDATE Producto
-        SET estado = CASE WHEN stock <= 0 THEN 'Agotado' ELSE 'Disponible' END
-        WHERE id_producto = NEW.id_producto;
-
-        -- Actualizar el estado del pedido si el producto se agotó
-        IF NEW.cantidad > (SELECT stock FROM Producto WHERE id_producto = NEW.id_producto) THEN
-            UPDATE Pedido
-            SET estado = 'Cancelado'
-            WHERE id_pedido = NEW.id_pedido;
-        END IF;
-    END IF;
+    -- Actualizar el estado de la mesa a 'Disponible'.
+    UPDATE Mesa
+    SET estado = 'Disponible'
+    WHERE id_mesa = (
+        SELECT id_mesa
+        FROM Pedido
+        WHERE id_pedido = NEW.id_pedido
+    );
 
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER trigger_actualizar_stock_y_estado
-AFTER INSERT ON Pedido_Producto
-FOR EACH ROW
-EXECUTE FUNCTION actualizar_stock_y_estado();
-
-CREATE OR REPLACE FUNCTION actualizar_estado_pedido()
-RETURNS TRIGGER AS $$
-BEGIN
-    -- Verificar si el pedido está asociado a la factura
-    IF NEW.id_pedido IS NOT NULL THEN
-        -- Actualizar el estado del pedido a "Cancelado" cuando se genera la factura
-        UPDATE Pedido
-        SET estado = 'Cancelado'
-        WHERE id_pedido = NEW.id_pedido;
-    END IF;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trigger_actualizar_estado_pedido
+-- Crear el trigger para que se active después de una inserción en la tabla Factura.
+CREATE TRIGGER factura_insert
 AFTER INSERT ON Factura
 FOR EACH ROW
-EXECUTE FUNCTION actualizar_estado_pedido();
+EXECUTE FUNCTION generar_factura();
 
-
-CREATE OR REPLACE FUNCTION verificar_estado_mesa()
-RETURNS TRIGGER AS $$
-DECLARE
-    estado_mesa VARCHAR(100);
-BEGIN
-    -- Obtener el estado de la mesa
-    SELECT estado INTO estado_mesa
-    FROM Mesa
-    WHERE id_mesa = NEW.id_mesa;
-
-    -- Verificar si la mesa está ocupada
-    IF estado_mesa = 'Ocupada' THEN
-        RAISE EXCEPTION 'La mesa está ocupada. No se puede realizar un pedido.';
-    END IF;
-
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trigger_verificar_estado_mesa
-BEFORE INSERT ON Pedido
-FOR EACH ROW
-EXECUTE FUNCTION verificar_estado_mesa();
 
 
 -- INSERTS
@@ -341,20 +300,10 @@ INSERT INTO Producto (nombre, stock, precio, tiempo, estado, id_categoria) VALUE
 -- Los registros no serán necesarios gracias a la función CURRENT_TIMESTAMP
 INSERT INTO Pedido (num_pedido, id_usuario, id_mesa, id_cliente) VALUES
 (1, 1, 1, 1),
-(2, 2, 2, 2),
-(3, 3, 3, 3),
-(4, 1, 4, 4),
-(5, 2, 5, 5);
+(2, 2, 2, 2);
 
 -- Registros para la tabla Pedido_Producto
 INSERT INTO Pedido_Producto (id_pedido, id_producto) VALUES
 (1, 1),
 (1, 2),
-(2, 4),
-(3, 6),
-(4, 8),
-(5, 10),
-(1, 3),
-(2, 5),
-(3, 6),
-(4, 7);
+(2, 4);

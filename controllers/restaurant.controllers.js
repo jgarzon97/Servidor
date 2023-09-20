@@ -195,9 +195,9 @@ async function getFactura(req, res) {
 }
 
 async function createFactura(req, res) {
-    const { numero, fecha, total, estado_de_pago, id_pedido } = req.body;
-    const query = 'INSERT INTO Factura (numero, fecha, total, estado_de_pago, id_pedido) VALUES ($1, $2, $3, $4, $5)';
-    const values = [numero, fecha, total, estado_de_pago, id_pedido];
+    const { numero, id_pedido } = req.body;
+    const query = 'INSERT INTO Factura (numero, id_pedido) VALUES ($1, $2)';
+    const values = [numero, id_pedido];
     try {
         const client = await pool.connect();
         const result = await client.query(query, values);
