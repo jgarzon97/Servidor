@@ -131,6 +131,26 @@ async function getUsuario(req, res) {
     }
 }
 
+async function getUsuarioNombres(req, res) {
+    const { id } = req.params;
+    const query = 'SELECT nombre_user, apellido_user FROM Usuario WHERE id_usuario = $1';
+    const values = [id];
+    try {
+        const client = await pool.connect();
+        const result = await client.query(query, values);
+        client.release();
+        if (result.rowCount > 0) {
+            res.status(200).json(result.rows[0]); // Devuelve solo el primer resultado
+        } else {
+            res.status(404).json({ message: 'No se encontró el usuario' });
+        }
+    } catch (err) {
+        console.error('Error al obtener el usuario:', err);
+        res.status(500).json({ error: "Error en el servidor" });
+    }
+}
+
+
 async function createUsuario(req, res) {
     const { user_usuario, pass_usuario, nombre_user, apellido_user, id_rol } = req.body;
     const query = 'INSERT INTO Usuario (user_usuario, pass_usuario, nombre_user, apellido_user, id_rol) VALUES ($1, $2, $3, $4, $5)';
@@ -148,6 +168,29 @@ async function createUsuario(req, res) {
         res.status(500).json({ error: "Error en el servidor" });
     }
 }
+
+async function authenticateUsuario(req, res) {
+    const { user_usuario, pass_usuario } = req.body;
+    const query = 'SELECT * FROM Usuario WHERE user_usuario = $1 AND pass_usuario = $2';
+    const values = [user_usuario, pass_usuario];
+
+    try {
+        const client = await pool.connect();
+        const result = await client.query(query, values);
+        client.release();
+
+        if (result.rowCount === 1) {
+            // Autenticación exitosa
+            res.status(200).json({ message: 'Autenticación exitosa' });
+        } else {
+            // Usuario o contraseña incorrectos
+            res.status(401).json({ message: 'Usuario o contraseña incorrectos' });
+        }
+    } catch (err) {
+        res.status(500).json({ error: "Error en el servidor" });
+    }
+}
+
 
 //#endregion
 
@@ -532,8 +575,10 @@ module.exports = {
     deletePedido,
     // Usuario
     getUsuario,
+    getUsuarioNombres,
     getUsuarios,
     createUsuario,
+    authenticateUsuario,
     // Categoria
     getCategoria,
     getCategorias,

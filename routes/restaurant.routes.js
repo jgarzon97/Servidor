@@ -11,7 +11,9 @@ var {
     // Usuario
     getUsuario,
     getUsuarios,
+    getUsuarioNombres,
     createUsuario,
+    authenticateUsuario,
     // Categoria
     getCategoria,
     getCategorias,
@@ -49,9 +51,11 @@ router.put('/pedido/:id', updatePedido);
 router.delete('/pedido/:id', deletePedido);
 
 // Rutas para la tabla "Usuario"
-router.get('/Usuario/:id', getUsuario);
+router.get('/usuario/:id', getUsuario);
+router.get('/usuarioNombres/:id', getUsuarioNombres);
 router.get('/usuarios', getUsuarios);
 router.post('/usuario', createUsuario);
+router.post('/auth', authenticateUsuario);
 
 // Rutas para la tabla "Categoria"
 router.get('/categoria/:id', getCategoria);
