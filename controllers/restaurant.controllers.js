@@ -8,11 +8,11 @@ const pool = new Pool({
     port: 5432
 });
 
-// Función que devuelve todos los registros de la Tabla Pedido
+//#region Pedido
 async function getPedidos(req, res) {
     try {
         const client = await pool.connect();
-        const result = await client.query('SELECT * FROM Pedido');
+        const result = await client.query('SELECT * FROM Vista_Pedido');
         client.release();
         res.json(result.rows);
     } catch (error) {
@@ -21,7 +21,6 @@ async function getPedidos(req, res) {
     }
 }
 
-// Función que devuelve un Pedido por id
 async function getPedido(req, res) {
     const { id } = req.params;
     const query = 'SELECT * FROM Pedido WHERE id_pedido = $1'
@@ -41,7 +40,6 @@ async function getPedido(req, res) {
     }
 }
 
-// Crea un pedido
 async function createPedido(req, res) {
     const { num_pedido, id_usuario, id_mesa, id_cliente } = req.body;
     const query = 'INSERT INTO Pedido (num_pedido, id_usuario, id_mesa, id_cliente) VALUES ($1, $2, $3, $4)';
@@ -60,6 +58,10 @@ async function createPedido(req, res) {
     }
 }
 
+//#endregion
+
+//#region Usuario
+
 async function getUsuarios(req, res) {
     try {
         const client = await pool.connect();
@@ -68,6 +70,25 @@ async function getUsuarios(req, res) {
         res.json(result.rows);
     } catch (error) {
         console.error('Error al obtener los usuarios:', error);
+        res.status(500).json({ error: "Error en el servidor" });
+    }
+}
+
+async function getUsuario(req, res) {
+    const { id } = req.params;
+    const query = 'SELECT * FROM Usuario WHERE id_usuario = $1'
+    const values = [id];
+    try {
+        const client = await pool.connect();
+        const result = await client.query(query, values);
+        client.release();
+        res.status(200);
+        if (result.rowCount > 0) {
+            res.json(result.rows);
+        } else {
+            res.status(500).json({ message: 'No existe el usuario' });
+        }
+    } catch (err) {
         res.status(500).json({ error: "Error en el servidor" });
     }
 }
@@ -126,7 +147,9 @@ async function autenticarUsuario(req, res) {
         res.status(500).json({ error: 'Error en el servidor', detalle: error.message });
     }
 }
+//#endregion
 
+//#region Categoria
 
 async function getCategorias(req, res) {
     try {
@@ -136,6 +159,29 @@ async function getCategorias(req, res) {
         res.json(result.rows);
     } catch (error) {
         console.error('Error al obtener los productos:', error);
+        res.status(500).json({ error: "Error en el servidor" });
+    }
+}
+
+//#endregion
+
+//#region Producto
+
+async function getProducto(req, res) {
+    const { id } = req.params;
+    const query = 'SELECT * FROM Producto WHERE id_producto = $1'
+    const values = [id];
+    try {
+        const client = await pool.connect();
+        const result = await client.query(query, values);
+        client.release();
+        res.status(200);
+        if (result.rowCount > 0) {
+            res.json(result.rows);
+        } else {
+            res.status(500).json({ message: 'No existe el producto' });
+        }
+    } catch (err) {
         res.status(500).json({ error: "Error en el servidor" });
     }
 }
@@ -170,6 +216,10 @@ async function createProducto(req, res) {
     }
 }
 
+//#endregion
+
+//#region Mesa
+
 async function getMesas(req, res) {
     try {
         const client = await pool.connect();
@@ -181,6 +231,48 @@ async function getMesas(req, res) {
         res.status(500).json({ error: "Error en el servidor" });
     }
 }
+
+
+async function getMesa(req, res) {
+    const { id } = req.params;
+    const query = 'SELECT * FROM Mesa WHERE id_mesa = $1'
+    const values = [id];
+    try {
+        const client = await pool.connect();
+        const result = await client.query(query, values);
+        client.release();
+        res.status(200);
+        if (result.rowCount > 0) {
+            res.json(result.rows);
+        } else {
+            res.status(500).json({ message: 'No existe la mesa' });
+        }
+    } catch (err) {
+        res.status(500).json({ error: "Error en el servidor" });
+    }
+}
+
+async function createMesa(req, res) {
+    const { num_mesa, capacidad, estado } = req.body;
+    const query = 'INSERT INTO Mesa (num_mesa, capacidad, estado) VALUES ($1, $2, $3)';
+    const values = [num_mesa, capacidad, estado];
+    try {
+        const client = await pool.connect();
+        const result = await client.query(query, values);
+        client.release();
+        if (result.rowCount > 0) {
+            res.status(200).json({ message: 'Se guardó con éxito la mesa' });
+        } else {
+            res.status(400).json({ message: 'No se guardó la mesa' });
+        }
+    } catch (err) {
+        res.status(500).json({ error: "Error en el servidor" });
+    }
+}
+
+//#endregion
+
+//#region Factura
 
 async function getFactura(req, res) {
     try {
@@ -212,6 +304,29 @@ async function createFactura(req, res) {
     }
 }
 
+//#endregion
+
+//#region Cliente
+
+async function getCliente(req, res) {
+    const { id } = req.params;
+    const query = 'SELECT * FROM Cliente WHERE id_cliente = $1'
+    const values = [id];
+    try {
+        const client = await pool.connect();
+        const result = await client.query(query, values);
+        client.release();
+        res.status(200);
+        if (result.rowCount > 0) {
+            res.json(result.rows);
+        } else {
+            res.status(500).json({ message: 'No existe el cliente' });
+        }
+    } catch (err) {
+        res.status(500).json({ error: "Error en el servidor" });
+    }
+}
+
 async function getClientes(req, res) {
     try {
         const client = await pool.connect();
@@ -223,6 +338,10 @@ async function getClientes(req, res) {
         res.status(500).json({ error: "Error en el servidor" });
     }
 }
+
+//#endregion
+
+//#region Pedido_Producto
 
 async function createPedido_Producto(req, res) {
     const { id_pedido, id_producto, cantidad } = req.body;
@@ -242,6 +361,7 @@ async function createPedido_Producto(req, res) {
     }
 }
 
+//#endregion
 
 module.exports = {
     // Pedido
@@ -249,19 +369,24 @@ module.exports = {
     getPedidos,
     createPedido,
     // Usuario
+    getUsuario,
     getUsuarios,
     createUsuario,
     autenticarUsuario,
     // Categoria
     getCategorias,
     // Mesa
+    getMesa,
     getMesas,
+    createMesa,
     // Factura
     getFactura,
     createFactura,
     // Cliente
+    getCliente,
     getClientes,
     // Producto
+    getProducto,
     getProductos,
     createProducto,
     // Pedido_Producto

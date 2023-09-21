@@ -83,26 +83,23 @@ CREATE TABLE Factura (
     CONSTRAINT uk_id_pedido UNIQUE (id_pedido)
 );
 
+-- VISTA PEDIDO
+CREATE OR REPLACE VIEW Vista_Pedido AS
+SELECT
+    P.id_pedido,
+    P.num_pedido,
+    P.fecha,
+    P.hora,
+    U.nombre AS nombre_usuario,
+    U.apellido AS apellido_usuario,
+    C.nombre AS nombre_cliente,
+    C.apellido AS apellido_cliente,
+    P.estado
+FROM
+    Pedido P
+LEFT JOIN Usuario U ON P.id_usuario = U.id_usuario
+LEFT JOIN Cliente C ON P.id_cliente = C.id_cliente;
 
--- Trigger que actualiza el estado de la mesa a "Ocupada"
--- cuando se inserte un nuevo pedido en la tabla Pedido.
-CREATE FUNCTION actualizar_estado_mesa()
-    RETURNS TRIGGER AS $$
-BEGIN
-    -- Actualizar el estado de la mesa a "Ocupada" solo si no es "Ocupada" actualmente.
-    UPDATE Mesa
-    SET estado = 'Ocupada'
-    WHERE id_mesa = NEW.id_mesa AND estado != 'Ocupada';
-
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
--- Trigger para que se active después de una inserción en la tabla Pedido.
-CREATE TRIGGER pedido_insert
-AFTER INSERT ON Pedido
-FOR EACH ROW
-EXECUTE FUNCTION actualizar_estado_mesa();
 
 
 -- Trigger que actualiza el stock de los productos y genere una alerta
@@ -160,15 +157,13 @@ FOR EACH ROW
 EXECUTE FUNCTION calcular_total_factura();
 
 
-DROP TRIGGER IF EXISTS pedido_insert ON Pedido;
-
 CREATE OR REPLACE FUNCTION marcar_mesa_como_ocupada()
     RETURNS TRIGGER AS $$
 BEGIN
     -- Actualizar el estado de la mesa a "ocupada" solo si no es "ocupada" actualmente.
-    IF NEW.estado != 'ocupada' THEN
+    IF NEW.estado != 'Ocupada' THEN
         UPDATE Mesa
-        SET estado = 'ocupada'
+        SET estado = 'Ocupada'
         WHERE id_mesa = NEW.id_mesa;
     END IF;
 
