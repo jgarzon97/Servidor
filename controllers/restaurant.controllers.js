@@ -9,10 +9,11 @@ const pool = new Pool({
 });
 
 //#region Pedido
+
 async function getPedidos(req, res) {
     try {
         const client = await pool.connect();
-        const result = await client.query('SELECT * FROM Vista_Pedido');
+        const result = await client.query('SELECT * FROM Pedido');
         client.release();
         res.json(result.rows);
     } catch (error) {
@@ -41,9 +42,9 @@ async function getPedido(req, res) {
 }
 
 async function createPedido(req, res) {
-    const { num_pedido, id_usuario, id_mesa, id_cliente } = req.body;
-    const query = 'INSERT INTO Pedido (num_pedido, id_usuario, id_mesa, id_cliente) VALUES ($1, $2, $3, $4)';
-    const values = [num_pedido, id_usuario, id_mesa, id_cliente];
+    const { id_usuario, id_mesa } = req.body;
+    const query = 'INSERT INTO Pedido (id_usuario, id_mesa) VALUES ($1, $2)';
+    const values = [id_usuario, id_mesa];
     try {
         const client = await pool.connect();
         const result = await client.query(query, values);
@@ -52,6 +53,43 @@ async function createPedido(req, res) {
             res.status(200).json({ message: 'Se guardó con éxito el pedido' });
         } else {
             res.status(400).json({ message: 'No se guardó el pedido' });
+        }
+    } catch (err) {
+        res.status(500).json({ error: "Error en el servidor" });
+    }
+}
+
+async function updatePedido(req, res) {
+    const { id } = req.params;
+    const { id_mesa } = req.body;
+    const query = 'UPDATE Pedido SET id_mesa=$2 WHERE id_pedido=$1';
+    const values = [id, id_mesa];
+    try {
+        const client = await pool.connect();
+        const result = await client.query(query, values);
+        client.release();
+        if (result.rowCount > 0) {
+            res.status(200).json({ message: 'Se actualizó el Pedido' });
+        } else {
+            res.status(400).json({ message: 'No se actualizó' });
+        }
+    } catch (err) {
+        res.status(500).json({ error: "Error en el servidor" });
+    }
+}
+
+async function deletePedido(req, res) {
+    const { id } = req.params;
+    const query = 'DELETE FROM Pedido WHERE id_pedido=$1'
+    const values = [id];
+    try {
+        const client = await pool.connect();
+        const result = await client.query(query, values);
+        client.release();
+        if (result.rowCount > 0) {
+            res.status(200).json({ message: 'Pedido eliminada' });
+        } else {
+            res.status(500).json({ message: 'No existe el Pedido' });
         }
     } catch (err) {
         res.status(500).json({ error: "Error en el servidor" });
@@ -233,7 +271,6 @@ async function getMesas(req, res) {
     }
 }
 
-
 async function getMesa(req, res) {
     const { id } = req.params;
     const query = 'SELECT * FROM Mesa WHERE id_mesa = $1'
@@ -252,6 +289,20 @@ async function getMesa(req, res) {
         res.status(500).json({ error: "Error en el servidor" });
     }
 }
+
+async function getMesaEstado(req, res) {
+    const query = 'SELECT * FROM Mesa WHERE estado = $1';
+    const values = ['Disponible']; // Filtrar por estado 'Disponible'
+    try {
+        const client = await pool.connect();
+        const result = await client.query(query, values);
+        client.release();
+        res.status(200).json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: "Error en el servidor" });
+    }
+}
+
 
 async function createMesa(req, res) {
     const { num_mesa, capacidad, estado } = req.body;
@@ -307,9 +358,9 @@ async function getFacturas(req, res) {
 }
 
 async function createFactura(req, res) {
-    const { numero, id_pedido } = req.body;
-    const query = 'INSERT INTO Factura (numero, id_pedido) VALUES ($1, $2)';
-    const values = [numero, id_pedido];
+    const { numero, id_pedido, id_cliente } = req.body;
+    const query = 'INSERT INTO Factura (numero, id_pedido, id_cliente) VALUES ($1, $2, $3)';
+    const values = [numero, id_pedido, id_cliente];
     try {
         const client = await pool.connect();
         const result = await client.query(query, values);
@@ -438,6 +489,8 @@ module.exports = {
     getPedido,
     getPedidos,
     createPedido,
+    updatePedido,
+    deletePedido,
     // Usuario
     getUsuario,
     getUsuarios,
@@ -449,6 +502,7 @@ module.exports = {
     // Mesa
     getMesa,
     getMesas,
+    getMesaEstado,
     createMesa,
     // Factura
     getFactura,

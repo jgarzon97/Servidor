@@ -52,16 +52,13 @@ CREATE TABLE Producto (
 
 CREATE TABLE Pedido (
     id_pedido SERIAL PRIMARY KEY,
-    num_pedido INT NOT NULL,
     fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     hora TIME DEFAULT CURRENT_TIMESTAMP,
     id_usuario INT,
     id_mesa INT,
-    id_cliente INT,
     estado VARCHAR(100) DEFAULT 'Pendiente',
     FOREIGN KEY (id_usuario) REFERENCES Usuario(id_usuario),
-    FOREIGN KEY (id_mesa) REFERENCES Mesa(id_mesa),
-    FOREIGN KEY (id_cliente) REFERENCES Cliente(id_cliente)
+    FOREIGN KEY (id_mesa) REFERENCES Mesa(id_mesa)
 );
 
 CREATE TABLE Pedido_Producto (
@@ -79,28 +76,11 @@ CREATE TABLE Factura (
     total DECIMAL(10, 2),
     estado_de_pago VARCHAR(100) DEFAULT 'Cancelado',
     id_pedido INT,
+    id_cliente INT,
     FOREIGN KEY (id_pedido) REFERENCES Pedido(id_pedido),
+    FOREIGN KEY (id_cliente) REFERENCES Cliente(id_cliente),
     CONSTRAINT uk_id_pedido UNIQUE (id_pedido)
 );
-
--- VISTA PEDIDO
-CREATE OR REPLACE VIEW Vista_Pedido AS
-SELECT
-    P.id_pedido,
-    P.num_pedido,
-    P.fecha,
-    P.hora,
-    U.nombre AS nombre_usuario,
-    U.apellido AS apellido_usuario,
-    C.nombre AS nombre_cliente,
-    C.apellido AS apellido_cliente,
-    P.estado
-FROM
-    Pedido P
-LEFT JOIN Usuario U ON P.id_usuario = U.id_usuario
-LEFT JOIN Cliente C ON P.id_cliente = C.id_cliente;
-
-
 
 -- Trigger que actualiza el stock de los productos y genere una alerta
 -- cuando se inserte un nuevo registro en la tabla Pedido_Producto.
@@ -205,12 +185,34 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Crear el trigger para que se active después de una inserción en la tabla Factura.
+-- Trigger para que se active después de una inserción en la tabla Factura.
 CREATE TRIGGER factura_insert
 AFTER INSERT ON Factura
 FOR EACH ROW
 EXECUTE FUNCTION generar_factura();
 
+
+CREATE OR REPLACE FUNCTION liberar_mesa_despues_de_eliminar()
+RETURNS TRIGGER AS $$
+DECLARE
+    id_mesa_libre INT;
+BEGIN
+    -- Obtener el ID de la mesa del registro eliminado
+    id_mesa_libre := old.id_mesa;
+
+    -- Actualizar el estado de la mesa a "Disponible"
+    UPDATE Mesa
+    SET estado = 'Disponible'
+    WHERE id_mesa = id_mesa_libre;
+
+    RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_liberar_mesa_despues_de_eliminar
+AFTER DELETE ON Pedido
+FOR EACH ROW
+EXECUTE FUNCTION liberar_mesa_despues_de_eliminar();
 
 
 -- INSERTS
@@ -226,10 +228,9 @@ INSERT INTO Usuario (user_usuario, pass_usuario, nombre_user, apellido_user, id_
 
 -- Usuarios con rol "camarero"
 INSERT INTO Usuario (user_usuario, pass_usuario, nombre_user, apellido_user, id_rol) VALUES
-('camarero1', 'contraseña1', 'Nayelhy', 'Ponce', 2),
-('camarero2', 'contraseña2', 'Doamel', 'Navarrete', 2),
-('camarero3', 'contraseña3', 'Jarod', 'Mendoza', 2),
-('camarero4', 'contraseña4', 'Stalin', 'Cajamarca', 2);
+('camarero1', '123abc', 'Nayelhy', 'Ponce', 2),
+('camarero2', '456abc', 'Doamel', 'Navarrete', 2),
+('camarero3', '789abc', 'Stalin', 'Cajamarca', 2);
 
 -- Ingreso de Mesas
 INSERT INTO Mesa (num_mesa, capacidad, estado) VALUES
@@ -237,7 +238,9 @@ INSERT INTO Mesa (num_mesa, capacidad, estado) VALUES
 (2, 6, 'Disponible'),
 (3, 2, 'Disponible'),
 (4, 8, 'Disponible'),
-(5, 4, 'Disponible');
+(5, 4, 'Disponible'),
+(6, 2, 'Disponible'),
+(7, 4, 'Disponible');
 
 -- Ingreso de Clientes
 INSERT INTO Cliente (cedula, nombre, apellido, direccion) VALUES
@@ -293,9 +296,9 @@ INSERT INTO Producto (nombre, stock, precio, tiempo, estado, id_categoria) VALUE
 
 -- Registros para la tabla Pedido con hora específica.
 -- Los registros no serán necesarios gracias a la función CURRENT_TIMESTAMP
-INSERT INTO Pedido (num_pedido, id_usuario, id_mesa, id_cliente) VALUES
-(1, 1, 1, 1),
-(2, 2, 2, 2);
+INSERT INTO Pedido (num_pedido, id_usuario, id_mesa) VALUES
+(1, 1, 1),
+(2, 2, 2);
 
 -- Registros para la tabla Pedido_Producto
 INSERT INTO Pedido_Producto (id_pedido, id_producto) VALUES

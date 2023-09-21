@@ -6,6 +6,8 @@ var {
     getPedido,
     getPedidos,
     createPedido,
+    updatePedido,
+    deletePedido,
     // Usuario
     getUsuario,
     getUsuarios,
@@ -17,6 +19,7 @@ var {
     // Mesa
     getMesa,
     getMesas,
+    getMesaEstado,
     createMesa,
     // Factura
     getFactura,
@@ -40,6 +43,8 @@ var {
 router.get('/pedido/:id', getPedido);
 router.get('/pedidos', getPedidos);
 router.post('/pedido', createPedido);
+router.put('/pedido/:id', updatePedido);
+router.delete('/pedido/:id', deletePedido);
 
 // Rutas para la tabla "Usuario"
 router.get('/Usuario/:id', getUsuario);
@@ -54,6 +59,7 @@ router.post('/categoria', createCategoria);
 // Rutas para la tabla "Mesa"
 router.get('/mesa/:id', getMesa);
 router.get('/mesas', getMesas);
+router.get('/mesasDisponible', getMesaEstado);
 router.post('/mesa', createMesa);
 
 // Rutas para la tabla "Factura"
