@@ -111,45 +111,28 @@ async function createUsuario(req, res) {
     }
 }
 
-const bcrypt = require('bcrypt');
-
-async function autenticarUsuario(req, res) {
-    try {
-        const { usuario, password } = req.body;
-
-        // Realizar una consulta SQL para obtener la contraseña almacenada en la base de datos
-        const query = 'SELECT * FROM Usuario WHERE user_usuario = $1';
-        const result = await pool.query(query, [usuario]);
-
-        // Verificar si se encontró un usuario con ese nombre de usuario
-        if (result.rows.length === 1) {
-            const user = result.rows[0];
-
-            // Verificar la contraseña utilizando bcrypt
-            bcrypt.compare(password, user.pass_usuario, (err, passwordMatch) => {
-                if (err) {
-                    // Error en la comparación de contraseñas
-                    res.status(500).json({ error: 'Error en el servidor', detalle: err.message });
-                } else if (passwordMatch) {
-                    // Usuario autenticado con éxito
-                    res.status(200).json({ mensaje: 'Autenticación exitosa', usuario: user });
-                } else {
-                    // Credenciales incorrectas
-                    res.status(401).json({ error: 'Credenciales incorrectas' });
-                }
-            });
-        } else {
-            // Usuario no encontrado
-            res.status(401).json({ error: 'Usuario no encontrado' });
-        }
-    } catch (error) {
-        console.error('Error al autenticar usuario:', error);
-        res.status(500).json({ error: 'Error en el servidor', detalle: error.message });
-    }
-}
 //#endregion
 
 //#region Categoria
+
+async function getCategoria(req, res) {
+    const { id } = req.params;
+    const query = 'SELECT * FROM Categoria WHERE id_categoria = $1'
+    const values = [id];
+    try {
+        const client = await pool.connect();
+        const result = await client.query(query, values);
+        client.release();
+        res.status(200);
+        if (result.rowCount > 0) {
+            res.json(result.rows);
+        } else {
+            res.status(500).json({ message: 'No existe la categoria' });
+        }
+    } catch (err) {
+        res.status(500).json({ error: "Error en el servidor" });
+    }
+}
 
 async function getCategorias(req, res) {
     try {
@@ -158,7 +141,25 @@ async function getCategorias(req, res) {
         client.release();
         res.json(result.rows);
     } catch (error) {
-        console.error('Error al obtener los productos:', error);
+        console.error('Error al obtener las categorias:', error);
+        res.status(500).json({ error: "Error en el servidor" });
+    }
+}
+
+async function createCategoria(req, res) {
+    const { nombre, estado } = req.body;
+    const query = 'INSERT INTO Categoria (nombre, estado) VALUES ($1, $2)';
+    const values = [nombre, estado];
+    try {
+        const client = await pool.connect();
+        const result = await client.query(query, values);
+        client.release();
+        if (result.rowCount > 0) {
+            res.status(200).json({ message: 'Registro exitoso' });
+        } else {
+            res.status(400).json({ message: 'No se guardó la Categoría' });
+        }
+    } catch (err) {
         res.status(500).json({ error: "Error en el servidor" });
     }
 }
@@ -275,6 +276,25 @@ async function createMesa(req, res) {
 //#region Factura
 
 async function getFactura(req, res) {
+    const { id } = req.params;
+    const query = 'SELECT * FROM Factura WHERE id_factura = $1'
+    const values = [id];
+    try {
+        const client = await pool.connect();
+        const result = await client.query(query, values);
+        client.release();
+        res.status(200);
+        if (result.rowCount > 0) {
+            res.json(result.rows);
+        } else {
+            res.status(500).json({ message: 'No existe el registro' });
+        }
+    } catch (err) {
+        res.status(500).json({ error: "Error en el servidor" });
+    }
+}
+
+async function getFacturas(req, res) {
     try {
         const client = await pool.connect();
         const result = await client.query('SELECT * FROM Factura');
@@ -334,7 +354,26 @@ async function getClientes(req, res) {
         client.release();
         res.json(result.rows);
     } catch (error) {
-        console.error('Error al obtener los clientes:', error);
+        console.error('Error al obtener los registros:', error);
+        res.status(500).json({ error: "Error en el servidor" });
+    }
+}
+
+
+async function createCliente(req, res) {
+    const { cedula, nombre, apellidp, direccion } = req.body;
+    const query = 'INSERT INTO Cliente (cedula, nombre, apellidp, direccion) VALUES ($1, $2, $3, $4)';
+    const values = [cedula, nombre, apellidp, direccion];
+    try {
+        const client = await pool.connect();
+        const result = await client.query(query, values);
+        client.release();
+        if (result.rowCount > 0) {
+            res.status(200).json({ message: 'Registro exitoso' });
+        } else {
+            res.status(400).json({ message: 'No se guardaro el cliente' });
+        }
+    } catch (err) {
         res.status(500).json({ error: "Error en el servidor" });
     }
 }
@@ -342,6 +381,37 @@ async function getClientes(req, res) {
 //#endregion
 
 //#region Pedido_Producto
+
+async function getPedido_Producto(req, res) {
+    const { id } = req.params;
+    const query = 'SELECT * FROM Pedido_Producto WHERE id_pedido = $1'
+    const values = [id];
+    try {
+        const client = await pool.connect();
+        const result = await client.query(query, values);
+        client.release();
+        res.status(200);
+        if (result.rowCount > 0) {
+            res.json(result.rows);
+        } else {
+            res.status(500).json({ message: 'No existe el registro en la Tabla' });
+        }
+    } catch (err) {
+        res.status(500).json({ error: "Error en el servidor" });
+    }
+}
+
+async function getPedido_Productos(req, res) {
+    try {
+        const client = await pool.connect();
+        const result = await client.query('SELECT * FROM Pedido_Producto');
+        client.release();
+        res.json(result.rows);
+    } catch (error) {
+        console.error('Error al obtener los registros:', error);
+        res.status(500).json({ error: "Error en el servidor" });
+    }
+}
 
 async function createPedido_Producto(req, res) {
     const { id_pedido, id_producto, cantidad } = req.body;
@@ -372,23 +442,28 @@ module.exports = {
     getUsuario,
     getUsuarios,
     createUsuario,
-    autenticarUsuario,
     // Categoria
+    getCategoria,
     getCategorias,
+    createCategoria,
     // Mesa
     getMesa,
     getMesas,
     createMesa,
     // Factura
     getFactura,
+    getFacturas,
     createFactura,
     // Cliente
     getCliente,
     getClientes,
+    createCliente,
     // Producto
     getProducto,
     getProductos,
     createProducto,
     // Pedido_Producto
+    getPedido_Producto,
+    getPedido_Productos,
     createPedido_Producto
 };
