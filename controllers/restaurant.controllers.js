@@ -482,6 +482,45 @@ async function createPedido_Producto(req, res) {
     }
 }
 
+
+async function updatePedido_Producto(req, res) {
+    const { id } = req.params;
+    const { id_producto, cantidad } = req.body;
+    const query = 'UPDATE Pedido_Producto SET id_producto=$2, cantidad=$3 WHERE id_pedido=$1';
+    const values = [id, id_producto, cantidad];
+    try {
+        const client = await pool.connect();
+        const result = await client.query(query, values);
+        client.release();
+        if (result.rowCount > 0) {
+            res.status(200).json({ message: 'Se actualizaron los detalles' });
+        } else {
+            res.status(400).json({ message: 'No se actualizó' });
+        }
+    } catch (err) {
+        res.status(500).json({ error: "Error en el servidor" });
+    }
+}
+
+async function deletePedido_Producto(req, res) {
+    const { id } = req.params;
+    const query = 'DELETE FROM Pedido_Producto WHERE id_pedido=$1'
+    const values = [id];
+    try {
+        const client = await pool.connect();
+        const result = await client.query(query, values);
+        client.release();
+        if (result.rowCount > 0) {
+            res.status(200).json({ message: 'El detalle ha sido eliminado' });
+        } else {
+            res.status(500).json({ message: 'No existe el detalle' });
+        }
+    } catch (err) {
+        res.status(500).json({ error: "Error en el servidor" });
+    }
+}
+
+
 //#endregion
 
 module.exports = {
@@ -519,5 +558,7 @@ module.exports = {
     // Pedido_Producto
     getPedido_Producto,
     getPedido_Productos,
-    createPedido_Producto
+    createPedido_Producto,
+    updatePedido_Producto,
+    deletePedido_Producto
 };
