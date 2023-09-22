@@ -233,6 +233,8 @@ BEFORE INSERT OR UPDATE ON Pedido
 FOR EACH ROW
 EXECUTE FUNCTION ajustar_fecha_y_hora();
 
+
+-- Función para eliminar el Pedido y sus detalles
 CREATE OR REPLACE FUNCTION eliminar_pedido_producto()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -241,6 +243,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- Trigger para que se active luego de eliminar un Pedido
 CREATE TRIGGER tr_eliminar_pedido_producto
 BEFORE DELETE ON Pedido
 FOR EACH ROW

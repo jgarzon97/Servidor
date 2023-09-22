@@ -50,7 +50,6 @@ router.post('/pedido', createPedido);
 router.put('/pedido/:id', updatePedido);
 router.delete('/pedido/:id', deletePedido);
 
-
 // Rutas para la tabla "Usuario"
 router.get('/usuario/:id', getUsuario);
 router.get('/usuarioNombres/:id', getUsuarioNombres);

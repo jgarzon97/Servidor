@@ -526,6 +526,7 @@ async function createPedido_Producto(req, res) {
 }
 
 
+
 async function updatePedido_Producto(req, res) {
     const { id } = req.params;
     const { id_producto, cantidad } = req.body;
