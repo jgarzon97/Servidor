@@ -215,6 +215,38 @@ FOR EACH ROW
 EXECUTE FUNCTION liberar_mesa_despues_de_eliminar();
 
 
+CREATE OR REPLACE FUNCTION ajustar_fecha_y_hora()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Ajustar el campo fecha para contener solo día, mes y año
+    NEW.fecha = TO_CHAR(NEW.fecha, 'YYYY-MM-DD');
+
+    -- Ajustar el campo hora para contener solo hora y minutos
+    NEW.hora = TO_CHAR(NEW.hora, 'HH24:MI');
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER tr_ajustar_fecha_y_hora
+BEFORE INSERT OR UPDATE ON Pedido
+FOR EACH ROW
+EXECUTE FUNCTION ajustar_fecha_y_hora();
+
+CREATE OR REPLACE FUNCTION eliminar_pedido_producto()
+RETURNS TRIGGER AS $$
+BEGIN
+    DELETE FROM Pedido_Producto WHERE id_pedido = OLD.id_pedido;
+    RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER tr_eliminar_pedido_producto
+BEFORE DELETE ON Pedido
+FOR EACH ROW
+EXECUTE FUNCTION eliminar_pedido_producto();
+
+
 -- INSERTS
 
 -- Roles para el sistema
