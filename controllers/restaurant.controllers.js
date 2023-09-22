@@ -5,7 +5,7 @@ const pool = new Pool({
     user: 'postgres',
     password: 'admin',
     database: 'baserestaurante',
-    port: 5432
+    port: 5433
 });
 
 //#region Pedido

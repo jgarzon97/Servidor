@@ -228,9 +228,9 @@ INSERT INTO Usuario (user_usuario, pass_usuario, nombre_user, apellido_user, id_
 
 -- Usuarios con rol "camarero"
 INSERT INTO Usuario (user_usuario, pass_usuario, nombre_user, apellido_user, id_rol) VALUES
-('camarero1', '123abc', 'Nayelhy', 'Ponce', 2),
-('camarero2', '456abc', 'Doamel', 'Navarrete', 2),
-('camarero3', '789abc', 'Stalin', 'Cajamarca', 2);
+('nponce', '1111', 'Nayelhy', 'Ponce', 2),
+('dnavarrete', '2222', 'Doamel', 'Navarrete', 2),
+('scajamarca', '3333', 'Stalin', 'Cajamarca', 2);
 
 -- Ingreso de Mesas
 INSERT INTO Mesa (num_mesa, capacidad, estado) VALUES
