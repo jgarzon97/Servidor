@@ -65,6 +65,7 @@ CREATE TABLE Pedido_Producto (
     id_pedido INT,
     id_producto INT,
     cantidad INT,
+    detalle TEXT,
     FOREIGN KEY (id_pedido) REFERENCES Pedido(id_pedido),
     FOREIGN KEY (id_producto) REFERENCES Producto(id_producto)
 );

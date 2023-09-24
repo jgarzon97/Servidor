@@ -5,7 +5,7 @@ const pool = new Pool({
     user: 'postgres',
     password: 'admin',
     database: 'baserestaurante',
-    port: 5433
+    port: 5432
 });
 
 //#region Pedido
@@ -168,7 +168,7 @@ async function createUsuario(req, res) {
         res.status(500).json({ error: "Error en el servidor" });
     }
 }
-
+/*
 async function authenticateUsuario(req, res) {
     const { user_usuario, pass_usuario } = req.body;
     const query = 'SELECT * FROM Usuario WHERE user_usuario = $1 AND pass_usuario = $2';
@@ -190,7 +190,33 @@ async function authenticateUsuario(req, res) {
         res.status(500).json({ error: "Error en el servidor" });
     }
 }
-
+*/
+async function authenticateUsuario(req, res) {
+    const { user_usuario, pass_usuario } = req.body;
+    const query = 'SELECT * FROM Usuario WHERE user_usuario = $1 AND pass_usuario = $2';
+    const values = [user_usuario, pass_usuario];
+    try {
+        const client = await pool.connect();
+        const result = await client.query(query, values);
+        client.release();
+        if (result.rowCount === 1) {
+            const usuario = result.rows[0];
+            let mensajeBienvenida = '';
+            if (usuario.id_rol === 1) {
+                mensajeBienvenida = `Bienvenido Administrador, ${usuario.nombre_user}`;
+            } else if (usuario.id_rol === 2) {
+                mensajeBienvenida = `Bienvenido Camarero, ${usuario.nombre_user}`;
+            }
+            // Autenticación exitosa con mensaje personalizado
+            res.status(200).json({ message: 'Autenticación exitosa', welcomeMessage: mensajeBienvenida });
+        } else {
+            // Usuario o contraseña incorrectos
+            res.status(401).json({ message: 'Usuario o contraseña incorrectos' });
+        }
+    } catch (err) {
+        res.status(500).json({ error: "Error en el servidor" });
+    }
+}
 
 //#endregion
 
@@ -508,9 +534,9 @@ async function getPedido_Productos(req, res) {
 }
 
 async function createPedido_Producto(req, res) {
-    const { id_pedido, id_producto, cantidad } = req.body;
-    const query = 'INSERT INTO pedido_producto (id_pedido, id_producto, cantidad) VALUES ($1, $2, $3)';
-    const values = [id_pedido, id_producto, cantidad];
+    const { id_pedido, id_producto, cantidad, detalle } = req.body;
+    const query = 'INSERT INTO pedido_producto (id_pedido, id_producto, cantidad, detalle) VALUES ($1, $2, $3, $4)';
+    const values = [id_pedido, id_producto, cantidad, detalle];
     try {
         const client = await pool.connect();
         const result = await client.query(query, values);
