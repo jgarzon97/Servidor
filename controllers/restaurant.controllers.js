@@ -103,7 +103,7 @@ async function deletePedido(req, res) {
 async function getUsuarios(req, res) {
     try {
         const client = await pool.connect();
-        const result = await client.query('SELECT * FROM Usuario');
+        const result = await client.query('SELECT * FROM vista_usuarios');
         client.release();
         res.json(result.rows);
     } catch (error) {
@@ -297,7 +297,7 @@ async function getProducto(req, res) {
 async function getProductos(req, res) {
     try {
         const client = await pool.connect();
-        const result = await client.query('SELECT * FROM Producto');
+        const result = await client.query('SELECT * FROM vista_productos');
         client.release();
         res.json(result.rows);
     } catch (error) {
@@ -443,6 +443,27 @@ async function createFactura(req, res) {
         res.status(500).json({ error: "Error en el servidor" });
     }
 }
+
+
+async function updateFactura(req, res) {
+    const { total, estado_de_pago, id_pedido, id_cliente } = req.params;
+    const { id_factura } = req.body;
+    const query = 'UPDATE Pedido SET id_factura=$5 WHERE total=$1, estado_de_pago=$2, id_pedido=$3, id_cliente=$4';
+    const values = [total, estado_de_pago, id_pedido, id_cliente, id_factura];
+    try {
+        const client = await pool.connect();
+        const result = await client.query(query, values);
+        client.release();
+        if (result.rowCount > 0) {
+            res.status(200).json({ message: 'Se actualizó Factura' });
+        } else {
+            res.status(400).json({ message: 'No se actualizó' });
+        }
+    } catch (err) {
+        res.status(500).json({ error: "Error en el servidor" });
+    }
+}
+
 
 //#endregion
 

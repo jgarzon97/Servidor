@@ -15,6 +15,7 @@ CREATE TABLE Usuario (
     nombre_user VARCHAR(100),
     apellido_user VARCHAR(100),
     id_rol INT,
+    estado VARCHAR(100),
     FOREIGN KEY (id_rol) REFERENCES Rol(id_rol)
 );
 
@@ -83,26 +84,31 @@ CREATE TABLE Factura (
     CONSTRAINT uk_id_pedido UNIQUE (id_pedido)
 );
 
--- Trigger que actualiza el stock de los productos y genere una alerta
--- cuando se inserte un nuevo registro en la tabla Pedido_Producto.
+-- Trigger que actualiza el stock de los productos
 CREATE OR REPLACE FUNCTION actualizar_stock_producto()
-    RETURNS TRIGGER AS $$
+RETURNS TRIGGER AS $$
+DECLARE
+    stock_actual INTEGER;
 BEGIN
+    -- Obtener el stock actual del producto.
+    SELECT stock INTO stock_actual
+    FROM Producto
+    WHERE id_producto = NEW.id_producto;
+
     -- Actualizar el stock restando la cantidad del pedido.
     UPDATE Producto
-    SET stock = stock - NEW.cantidad
+    SET stock = stock_actual - NEW.cantidad
     WHERE id_producto = NEW.id_producto
-    AND stock >= NEW.cantidad;
+    AND stock_actual >= NEW.cantidad;
 
-    -- Verificar si se realizó la actualización del stock.
-    IF FOUND THEN
-        RETURN NEW;
-    ELSE
-        -- Generar una alerta si el stock es menor que 0.
-        RAISE EXCEPTION 'Alerta: Stock de producto (%s) es menor que 0', NEW.id_producto;
+    -- Si el stock llega a 0 o es menor que 0, actualizar el estado a 'Agotado'.
+    IF stock_actual - NEW.cantidad <= 0 THEN
+        UPDATE Producto
+        SET estado = 'Agotado'
+        WHERE id_producto = NEW.id_producto;
     END IF;
 
-    RETURN NULL;
+    RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -250,6 +256,35 @@ BEFORE DELETE ON Pedido
 FOR EACH ROW
 EXECUTE FUNCTION eliminar_pedido_producto();
 
+-- Trigger para controlar el stock de productos al hacer pedidos.
+CREATE OR REPLACE FUNCTION controlar_stock_producto()
+RETURNS TRIGGER AS $$
+DECLARE
+    stock_actual INT;
+BEGIN
+    -- Verificar si el stock actual es mayor o igual a la cantidad solicitada en el pedido.
+    IF NEW.cantidad > 0 THEN
+        -- Verificar el stock actual del producto.
+        SELECT stock INTO stock_actual
+        FROM Producto
+        WHERE id_producto = NEW.id_producto;
+
+        -- Si el stock es menor que la cantidad solicitada, lanzar una excepción.
+        IF NEW.cantidad > stock_actual THEN
+            RAISE EXCEPTION 'No hay suficiente stock disponible para el producto %s', NEW.id_producto;
+        END IF;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger para ejecutar la función al insertar registros en Pedido_Producto.
+CREATE TRIGGER controlar_stock_trigger
+BEFORE INSERT ON Pedido_Producto
+FOR EACH ROW
+EXECUTE FUNCTION controlar_stock_producto();
+
 
 -- INSERTS
 
@@ -259,14 +294,14 @@ INSERT INTO Rol (tipo_rol, detalles_rol) VALUES
 ('camarero', 'Rol para el personal de servicio de mesas.');
 
 -- Usuario con rol "admin"
-INSERT INTO Usuario (user_usuario, pass_usuario, nombre_user, apellido_user, id_rol) VALUES
+INSERT INTO Usuario (user_usuario, pass_usuario, nombre_user, apellido_user, id_rol, estado) VALUES
 ('admin', 'admin123', 'Jorge', 'Garzón', 1);
 
 -- Usuarios con rol "camarero"
-INSERT INTO Usuario (user_usuario, pass_usuario, nombre_user, apellido_user, id_rol) VALUES
-('nponce', '1111', 'Nayelhy', 'Ponce', 2),
-('dnavarrete', '2222', 'Doamel', 'Navarrete', 2),
-('scajamarca', '3333', 'Stalin', 'Cajamarca', 2);
+INSERT INTO Usuario (user_usuario, pass_usuario, nombre_user, apellido_user, id_rol, estado) VALUES
+('nponce', '1111', 'Nayelhy', 'Ponce', 2, 'Disponible'),
+('dnavarrete', '2222', 'Doamel', 'Navarrete', 2, 'Disponible'),
+('scajamarca', '3333', 'Stalin', 'Cajamarca', 2, 'Disponible');
 
 -- Ingreso de Mesas
 INSERT INTO Mesa (num_mesa, capacidad, estado) VALUES
@@ -341,3 +376,28 @@ INSERT INTO Pedido_Producto (id_pedido, id_producto) VALUES
 (1, 1),
 (1, 2),
 (2, 4);
+
+-- Vista que muestre el campo "tipo_rol" en lugar de "id_rol".
+CREATE OR REPLACE VIEW vista_usuarios AS
+SELECT
+    U.id_usuario,
+    U.user_usuario,
+    U.nombre_user,
+    U.apellido_user,
+    R.tipo_rol,
+    U.estado
+FROM Usuario U
+JOIN Rol R ON U.id_rol = R.id_rol;
+
+-- Vista que muestra el nombre de la categoría en lugar del ID de categoría.
+CREATE OR REPLACE VIEW vista_productos AS
+SELECT
+    P.id_producto,
+    P.nombre,
+    P.stock,
+    P.precio,
+    P.tiempo,
+    P.estado,
+    C.nombre AS nombre_categoria
+FROM Producto P
+JOIN Categoria C ON P.id_categoria = C.id_categoria;
