@@ -5,7 +5,7 @@ const pool = new Pool({
     user: 'postgres',
     password: 'admin',
     database: 'baserestaurante',
-    port: 5432
+    port: 5433
 });
 
 //#region Pedido
@@ -103,11 +103,7 @@ async function deletePedido(req, res) {
 async function getUsuarios(req, res) {
     try {
         const client = await pool.connect();
-<<<<<<< HEAD
         const result = await client.query('SELECT * FROM vista_usuarios');
-=======
-        const result = await client.query('SELECT * FROM Vista_usuarios');
->>>>>>> 4182ab34092dff0a99513c2881ac9f63ff8c273c
         client.release();
         res.json(result.rows);
     } catch (error) {
