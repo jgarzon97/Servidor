@@ -34,6 +34,7 @@ var {
     // Producto
     getProducto,
     getProductos,
+    getVistaProductos,
     createProducto,
     // Pedido_Producto
     getPedido_Producto,
@@ -80,7 +81,8 @@ router.post('/cliente', createCliente);
 
 // Rutas para la tabla "Producto"
 router.get('/producto/:id', getProducto);
-router.get('/productos', getProductos);
+//router.get('/productos', getProductos);
+router.get('/productos', getVistaProductos);
 router.post('/producto', createProducto);
 
 // Rutas para la tabla "Pedido_Producto"

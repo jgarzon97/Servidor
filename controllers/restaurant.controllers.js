@@ -103,7 +103,7 @@ async function deletePedido(req, res) {
 async function getUsuarios(req, res) {
     try {
         const client = await pool.connect();
-        const result = await client.query('SELECT * FROM Usuario');
+        const result = await client.query('SELECT * FROM Vista_usuarios');
         client.release();
         res.json(result.rows);
     } catch (error) {
@@ -272,6 +272,18 @@ async function getProductos(req, res) {
     try {
         const client = await pool.connect();
         const result = await client.query('SELECT * FROM Producto');
+        client.release();
+        res.json(result.rows);
+    } catch (error) {
+        console.error('Error al obtener los productos:', error);
+        res.status(500).json({ error: "Error en el servidor" });
+    }
+}
+
+async function getVistaProductos(req, res) {
+    try {
+        const client = await pool.connect();
+        const result = await client.query('SELECT * FROM Vista_productos');
         client.release();
         res.json(result.rows);
     } catch (error) {
@@ -600,6 +612,7 @@ module.exports = {
     // Producto
     getProducto,
     getProductos,
+    getVistaProductos,
     createProducto,
     // Pedido_Producto
     getPedido_Producto,

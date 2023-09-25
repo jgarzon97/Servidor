@@ -14,8 +14,10 @@ CREATE TABLE Usuario (
     pass_usuario VARCHAR(100) NOT NULL,
     nombre_user VARCHAR(100),
     apellido_user VARCHAR(100),
+    estado VARCHAR(100),
     id_rol INT,
-    FOREIGN KEY (id_rol) REFERENCES Rol(id_rol)
+    FOREIGN KEY (id_rol) REFERENCES Rol(id_rol),
+    CONSTRAINT uq_user_usuario UNIQUE (user_usuario);
 );
 
 CREATE TABLE Mesa (
@@ -83,7 +85,7 @@ CREATE TABLE Factura (
 );
 
 -- Trigger que actualiza el stock de los productos y genere una alerta
--- cuando se inserte un nuevo registro en la tabla Pedido_Producto.
+-- cuando se inserte un nuevo registro en la tabla Pedido_Producto
 CREATE OR REPLACE FUNCTION actualizar_stock_producto()
     RETURNS TRIGGER AS $$
 BEGIN
@@ -249,6 +251,30 @@ BEFORE DELETE ON Pedido
 FOR EACH ROW
 EXECUTE FUNCTION eliminar_pedido_producto();
 
+-- Crear una función para actualizar el estado del stock en función de la cantidad disponible.
+CREATE OR REPLACE FUNCTION actualizar_estado_stock()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.stock = 0 THEN
+        NEW.estado := 'Agotado';
+    ELSE
+        NEW.estado := 'Disponible';
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Crear el trigger para que se active antes de insertar o actualizar un producto.
+CREATE TRIGGER tr_actualizar_estado_stock
+BEFORE INSERT OR UPDATE ON Producto
+FOR EACH ROW
+EXECUTE FUNCTION actualizar_estado_stock();
+
+UPDATE Producto
+SET estado = 'Agotado'
+WHERE stock <= 0;
+
 
 -- INSERTS
 
@@ -340,3 +366,29 @@ INSERT INTO Pedido_Producto (id_pedido, id_producto) VALUES
 (1, 1),
 (1, 2),
 (2, 4);
+
+
+-- Vista que muestra el nombre de la categoría en lugar del ID de categoría.
+CREATE OR REPLACE VIEW vista_productos AS
+SELECT
+    P.id_producto,
+    P.nombre,
+    P.stock,
+    P.precio,
+    P.tiempo,
+    P.estado,
+    C.nombre AS nombre_categoria
+FROM Producto P
+JOIN Categoria C ON P.id_categoria = C.id_categoria;
+
+-- Vista donde muestra el campo "tipo_rol" en lugar de "id_rol".
+CREATE OR REPLACE VIEW vista_usuarios AS
+SELECT
+    U.id_usuario,
+    U.user_usuario,
+    U.nombre_user,
+    U.apellido_user,
+    R.tipo_rol,
+    U.estado
+FROM Usuario U
+JOIN Rol R ON U.id_rol = R.id_rol;
