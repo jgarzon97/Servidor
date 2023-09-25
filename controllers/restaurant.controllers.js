@@ -103,7 +103,11 @@ async function deletePedido(req, res) {
 async function getUsuarios(req, res) {
     try {
         const client = await pool.connect();
+<<<<<<< HEAD
         const result = await client.query('SELECT * FROM vista_usuarios');
+=======
+        const result = await client.query('SELECT * FROM Vista_usuarios');
+>>>>>>> 4182ab34092dff0a99513c2881ac9f63ff8c273c
         client.release();
         res.json(result.rows);
     } catch (error) {
@@ -298,6 +302,18 @@ async function getProductos(req, res) {
     try {
         const client = await pool.connect();
         const result = await client.query('SELECT * FROM vista_productos');
+        client.release();
+        res.json(result.rows);
+    } catch (error) {
+        console.error('Error al obtener los productos:', error);
+        res.status(500).json({ error: "Error en el servidor" });
+    }
+}
+
+async function getVistaProductos(req, res) {
+    try {
+        const client = await pool.connect();
+        const result = await client.query('SELECT * FROM Vista_productos');
         client.release();
         res.json(result.rows);
     } catch (error) {
@@ -647,6 +663,7 @@ module.exports = {
     // Producto
     getProducto,
     getProductos,
+    getVistaProductos,
     createProducto,
     // Pedido_Producto
     getPedido_Producto,

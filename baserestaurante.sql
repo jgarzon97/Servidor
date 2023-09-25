@@ -14,9 +14,15 @@ CREATE TABLE Usuario (
     pass_usuario VARCHAR(100) NOT NULL,
     nombre_user VARCHAR(100),
     apellido_user VARCHAR(100),
+    estado VARCHAR(100),
     id_rol INT,
+<<<<<<< HEAD
     estado VARCHAR(100),
     FOREIGN KEY (id_rol) REFERENCES Rol(id_rol)
+=======
+    FOREIGN KEY (id_rol) REFERENCES Rol(id_rol),
+    CONSTRAINT uq_user_usuario UNIQUE (user_usuario);
+>>>>>>> 4182ab34092dff0a99513c2881ac9f63ff8c273c
 );
 
 CREATE TABLE Mesa (
@@ -84,7 +90,12 @@ CREATE TABLE Factura (
     CONSTRAINT uk_id_pedido UNIQUE (id_pedido)
 );
 
+<<<<<<< HEAD
 -- Trigger que actualiza el stock de los productos
+=======
+-- Trigger que actualiza el stock de los productos y genere una alerta
+-- cuando se inserte un nuevo registro en la tabla Pedido_Producto
+>>>>>>> 4182ab34092dff0a99513c2881ac9f63ff8c273c
 CREATE OR REPLACE FUNCTION actualizar_stock_producto()
 RETURNS TRIGGER AS $$
 DECLARE
@@ -256,6 +267,7 @@ BEFORE DELETE ON Pedido
 FOR EACH ROW
 EXECUTE FUNCTION eliminar_pedido_producto();
 
+<<<<<<< HEAD
 -- Trigger para controlar el stock de productos al hacer pedidos.
 CREATE OR REPLACE FUNCTION controlar_stock_producto()
 RETURNS TRIGGER AS $$
@@ -273,17 +285,39 @@ BEGIN
         IF NEW.cantidad > stock_actual THEN
             RAISE EXCEPTION 'No hay suficiente stock disponible para el producto %s', NEW.id_producto;
         END IF;
+=======
+-- Crear una función para actualizar el estado del stock en función de la cantidad disponible.
+CREATE OR REPLACE FUNCTION actualizar_estado_stock()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.stock = 0 THEN
+        NEW.estado := 'Agotado';
+    ELSE
+        NEW.estado := 'Disponible';
+>>>>>>> 4182ab34092dff0a99513c2881ac9f63ff8c273c
     END IF;
 
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
+<<<<<<< HEAD
 -- Trigger para ejecutar la función al insertar registros en Pedido_Producto.
 CREATE TRIGGER controlar_stock_trigger
 BEFORE INSERT ON Pedido_Producto
 FOR EACH ROW
 EXECUTE FUNCTION controlar_stock_producto();
+=======
+-- Crear el trigger para que se active antes de insertar o actualizar un producto.
+CREATE TRIGGER tr_actualizar_estado_stock
+BEFORE INSERT OR UPDATE ON Producto
+FOR EACH ROW
+EXECUTE FUNCTION actualizar_estado_stock();
+
+UPDATE Producto
+SET estado = 'Agotado'
+WHERE stock <= 0;
+>>>>>>> 4182ab34092dff0a99513c2881ac9f63ff8c273c
 
 
 -- INSERTS
@@ -377,6 +411,7 @@ INSERT INTO Pedido_Producto (id_pedido, id_producto) VALUES
 (1, 2),
 (2, 4);
 
+<<<<<<< HEAD
 -- Vista que muestre el campo "tipo_rol" en lugar de "id_rol".
 CREATE OR REPLACE VIEW vista_usuarios AS
 SELECT
@@ -388,6 +423,8 @@ SELECT
     U.estado
 FROM Usuario U
 JOIN Rol R ON U.id_rol = R.id_rol;
+=======
+>>>>>>> 4182ab34092dff0a99513c2881ac9f63ff8c273c
 
 -- Vista que muestra el nombre de la categoría en lugar del ID de categoría.
 CREATE OR REPLACE VIEW vista_productos AS
@@ -401,3 +438,18 @@ SELECT
     C.nombre AS nombre_categoria
 FROM Producto P
 JOIN Categoria C ON P.id_categoria = C.id_categoria;
+<<<<<<< HEAD
+=======
+
+-- Vista donde muestra el campo "tipo_rol" en lugar de "id_rol".
+CREATE OR REPLACE VIEW vista_usuarios AS
+SELECT
+    U.id_usuario,
+    U.user_usuario,
+    U.nombre_user,
+    U.apellido_user,
+    R.tipo_rol,
+    U.estado
+FROM Usuario U
+JOIN Rol R ON U.id_rol = R.id_rol;
+>>>>>>> 4182ab34092dff0a99513c2881ac9f63ff8c273c
