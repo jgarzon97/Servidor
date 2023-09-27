@@ -1,48 +1,14 @@
 const { Router } = require('express');
 const router = new Router();
 
-var {
-    // Pedido
-    getPedido,
-    getPedidos,
-    createPedido,
-    updatePedido,
-    deletePedido,
-    // Usuario
-    getUsuario,
-    getUsuarios,
-    getUsuarioNombres,
-    createUsuario,
-    authenticateUsuario,
-    // Categoria
-    getCategoria,
-    getCategorias,
-    createCategoria,
-    // Mesa
-    getMesa,
-    getMesas,
-    getMesaEstado,
-    createMesa,
-    // Factura
-    getFactura,
-    getFacturas,
-    createFactura,
-    // Cliente
-    getCliente,
-    getClientes,
-    createCliente,
-    // Producto
-    getProducto,
-    getProductos,
-    getVistaProductos,
-    createProducto,
-    // Pedido_Producto
-    getPedido_Producto,
-    getPedido_Productos,
-    createPedido_Producto,
-    updatePedido_Producto,
-    deletePedido_Producto
-} = require('../controllers/restaurant.controllers');
+var { getCliente, getClientes, createCliente} = require('../controllers/clientes.controllers');
+var { getPedido, getPedidos, createPedido, updatePedido, deletePedido } = require('../controllers/pedidos.controllers');
+var { getUsuario, getUsuarios, createUsuario, iniciarSesion, getUsuarioRole, getUsuarioNombres, authenticateUsuario } = require('../controllers/usuarios.controllers');
+var { getCategoria, getCategorias, createCategoria } = require('../controllers/categorias.controllers');
+var { getProducto, obtenerIdPorNombre, getVistaProductos, getNameProductos, createProducto } = require('../controllers/productos.controllers');
+var { getMesa, getMesas, getMesaEstado, createMesa } = require('../controllers/mesas.controllers');
+var { getFactura, getFacturas, createFactura} = require('../controllers/facturas.controllers');
+var { getPedido_Producto, getPedido_Productos, createPedido_Producto, updatePedido_Producto, deletePedido_Producto} = require('../controllers/pedido.producto.controllers');
 
 // Rutas para la tabla "Pedido"
 router.get('/pedido/:id', getPedido);
@@ -54,9 +20,11 @@ router.delete('/pedido/:id', deletePedido);
 // Rutas para la tabla "Usuario"
 router.get('/usuario/:id', getUsuario);
 router.get('/usuarioNombres/:id', getUsuarioNombres);
+router.get('/usuarioRoles/:id', getUsuarioRole);
 router.get('/usuarios', getUsuarios);
 router.post('/usuario', createUsuario);
 router.post('/auth', authenticateUsuario);
+router.post('/iniciarSesion', iniciarSesion);
 
 // Rutas para la tabla "Categoria"
 router.get('/categoria/:id', getCategoria);
@@ -81,8 +49,9 @@ router.post('/cliente', createCliente);
 
 // Rutas para la tabla "Producto"
 router.get('/producto/:id', getProducto);
-//router.get('/productos', getProductos);
+router.get('/obtenerIdPorNombre/:nombre', obtenerIdPorNombre);
 router.get('/productos', getVistaProductos);
+router.get('/nameproductos', getNameProductos);
 router.post('/producto', createProducto);
 
 // Rutas para la tabla "Pedido_Producto"
