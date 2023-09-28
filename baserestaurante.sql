@@ -408,3 +408,107 @@ CREATE OR REPLACE VIEW vista_factura AS
 SELECT f.id_factura, f.fecha, f.total, f.estado_de_pago, f.id_pedido, c.nombre, c.apellido
 FROM Factura f
 JOIN Cliente c ON f.id_cliente = c.id_cliente;
+
+
+-- PROCESO ALMACENADO PARA obtener_pedidos
+CREATE OR REPLACE FUNCTION obtener_pedidos(id_usuario_param integer)
+RETURNS TABLE (
+    id_pedido integer,
+    fecha timestamp without time zone,
+    hora time,
+    id_usuario integer,
+    id_mesa integer,
+    estado character varying(100)
+)
+AS $$
+BEGIN
+    -- Verificar el rol del usuario
+    DECLARE
+        rol_usuario text;
+    BEGIN
+        SELECT r.tipo_rol INTO rol_usuario
+        FROM Usuario u
+        JOIN Rol r ON u.id_rol = r.id_rol
+        WHERE u.id_usuario = id_usuario_param;
+        -- Si el rol es "camarero", filtrar por id_usuario
+        IF rol_usuario = 'camarero' THEN
+            RETURN QUERY
+                SELECT p.*
+                FROM Pedido p
+                WHERE p.id_usuario = id_usuario_param;
+        ELSE
+            -- Si el rol es "administrador", mostrar todos los pedidos
+            RETURN QUERY
+                SELECT p.*
+                FROM Pedido p;
+        END IF;
+    END;
+END;
+$$ LANGUAGE plpgsql;
+
+
+-- PROCESO ALMACENADO PARA obtener_factura
+CREATE OR REPLACE FUNCTION obtener_factura(id_usuario_param integer)
+RETURNS TABLE (
+    id_factura integer,
+    fecha date,
+    total numeric(10, 2),
+    estado_de_pago text,
+    id_pedido integer,
+    id_cliente integer
+)
+AS $$
+BEGIN
+    -- Verificar el rol del usuario
+    DECLARE
+        rol_usuario text;
+    BEGIN
+        SELECT r.tipo_rol INTO rol_usuario
+        FROM Usuario u
+        JOIN Rol r ON u.id_rol = r.id_rol
+        WHERE u.id_usuario = id_usuario_param;
+        -- Si el rol es "camarero", filtrar por id_usuario en la subconsulta
+        IF rol_usuario = 'camarero' THEN
+            RETURN QUERY
+                SELECT f.*
+                FROM Factura f
+                JOIN Pedido p ON f.id_pedido = p.id_pedido
+                WHERE p.id_usuario = id_usuario_param;
+        ELSE
+            -- Si el rol es "administrador", mostrar todas las facturas
+            RETURN QUERY
+                SELECT * FROM Factura;
+        END IF;
+    END;
+END;
+$$ LANGUAGE plpgsql;
+
+-- FUNCION PARA INGRESAR Nombre EN LUGAR DEL ID_Producto
+CREATE OR REPLACE FUNCTION insertar_producto_en_pedido(
+    id_pedido_param integer,
+    nombre_producto_param text,
+    cantidad_param integer,
+    detalle_param text
+)
+RETURNS void
+AS $$
+BEGIN
+    -- Buscar el id_producto basado en el nombre del producto
+    DECLARE
+        producto_id integer;
+    BEGIN
+        SELECT id_producto INTO producto_id
+        FROM Producto
+        WHERE nombre = nombre_producto_param;
+        -- Verificar si se encontró un producto con el nombre dado
+        IF producto_id IS NOT NULL THEN
+            -- Insertar en la tabla pedido_producto
+            INSERT INTO pedido_producto (id_pedido, id_producto, cantidad, detalle)
+            VALUES (id_pedido_param, producto_id, cantidad_param, detalle_param);
+        ELSE
+            -- Realizar alguna acción en caso de que no se encuentre el producto
+            RAISE EXCEPTION 'El producto con nombre % no existe', nombre_producto_param;
+        END IF;
+    END;
+END;
+$$ LANGUAGE plpgsql;

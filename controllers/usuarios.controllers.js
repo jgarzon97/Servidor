@@ -5,7 +5,8 @@ const pool = new Pool({
     user: 'postgres',
     password: 'admin',
     database: 'baserestaurante',
-    port: 5432
+    port: 5432,
+    encoding: 'utf-8'
 });
 
 //#region Usuario
@@ -40,7 +41,6 @@ async function getUsuario(req, res) {
         res.status(500).json({ error: "Error en el servidor" });
     }
 }
-
 
 async function getUsuarioRole(req, res) {
     const { id } = req.params;
@@ -80,6 +80,24 @@ async function getUsuarioNombres(req, res) {
     }
 }
 
+async function getUsuarioPedido(req, res) {
+    const { id } = req.params;
+    const query = 'SELECT * FROM obtener_pedidos($1)';
+    const values = [id];
+    try {
+        const client = await pool.connect();
+        const result = await client.query(query, values);
+        client.release();
+        if (result.rowCount > 0) {
+            res.status(200).json(result.rows); // Devuelve todos los resultados
+        } else {
+            res.status(404).json({ message: 'No se encontró el usuario' });
+        }
+    } catch (err) {
+        console.error('Error al obtener el usuario:', err);
+        res.status(500).json({ error: "Error en el servidor" });
+    }
+}
 
 async function createUsuario(req, res) {
     const { user_usuario, pass_usuario, nombre_user, apellido_user, id_rol } = req.body;
@@ -98,29 +116,7 @@ async function createUsuario(req, res) {
         res.status(500).json({ error: "Error en el servidor" });
     }
 }
-/*
-async function authenticateUsuario(req, res) {
-    const { user_usuario, pass_usuario } = req.body;
-    const query = 'SELECT * FROM Usuario WHERE user_usuario = $1 AND pass_usuario = $2';
-    const values = [user_usuario, pass_usuario];
 
-    try {
-        const client = await pool.connect();
-        const result = await client.query(query, values);
-        client.release();
-
-        if (result.rowCount === 1) {
-            // Autenticación exitosa
-            res.status(200).json({ message: 'Autenticación exitosa' });
-        } else {
-            // Usuario o contraseña incorrectos
-            res.status(401).json({ message: 'Usuario o contraseña incorrectos' });
-        }
-    } catch (err) {
-        res.status(500).json({ error: "Error en el servidor" });
-    }
-}
-*/
 async function iniciarSesion(req, res) {
     const { user_usuario, pass_usuario } = req.body;
 
@@ -136,7 +132,10 @@ async function iniciarSesion(req, res) {
                 const { id_rol } = usuario; // Obtiene el valor de id_rol
                 const { id_usuario } = usuario; // Obtiene el valor de id
                 const { estado } = usuario; // Obtiene el estado
-                res.status(200).json({ message: 'Inicio de sesión exitoso', id_rol, id_usuario, estado });
+                const { nombre_user } = usuario; // Obtiene el estado
+                const { apellido_user } = usuario; // Obtiene el estado
+
+                res.status(200).json({ message: 'Inicio de sesión exitoso', id_rol, id_usuario, estado, nombre_user, apellido_user });
             } else {
                 res.status(401).json({ error: 'Contraseña incorrecta' });
             }
@@ -183,6 +182,7 @@ module.exports = {
     // Usuario
     getUsuario,
     getUsuarioNombres,
+    getUsuarioPedido,
     getUsuarioRole,
     getUsuarios,
     createUsuario,

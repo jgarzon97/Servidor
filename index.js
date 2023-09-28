@@ -9,9 +9,10 @@ app.use(cors());
 
 // Middelwares
 app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '5mb' }));
 
 // Rutas
 app.use(restaurant_routes);
 app.listen("3000");
-console.log("Server up localhost:3000");
+console.log("Servidor Express en ejecución en el puerto 3000");

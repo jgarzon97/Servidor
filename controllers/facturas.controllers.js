@@ -79,10 +79,30 @@ async function updateFactura(req, res) {
     }
 }
 
+async function getUsuarioFactura(req, res) {
+    const { id } = req.params;
+    const query = 'SELECT * FROM obtener_factura($1)';
+    const values = [id];
+    try {
+        const client = await pool.connect();
+        const result = await client.query(query, values);
+        client.release();
+        if (result.rowCount > 0) {
+            res.status(200).json(result.rows); // Devuelve todos los resultados
+        } else {
+            res.status(404).json({ message: 'No se encontró el usuario' });
+        }
+    } catch (err) {
+        console.error('Error al obtener el usuario:', err);
+        res.status(500).json({ error: "Error en el servidor" });
+    }
+}
+
 //#endregion
 
 module.exports = {
     getFactura,
     getFacturas,
+    getUsuarioFactura,
     createFactura
 };

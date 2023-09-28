@@ -3,11 +3,11 @@ const router = new Router();
 
 var { getCliente, getClientes, createCliente} = require('../controllers/clientes.controllers');
 var { getPedido, getPedidos, createPedido, updatePedido, deletePedido } = require('../controllers/pedidos.controllers');
-var { getUsuario, getUsuarios, createUsuario, iniciarSesion, getUsuarioRole, getUsuarioNombres, authenticateUsuario } = require('../controllers/usuarios.controllers');
+var { getUsuario, getUsuarios, getUsuarioPedido, createUsuario, iniciarSesion, getUsuarioRole, getUsuarioNombres, authenticateUsuario } = require('../controllers/usuarios.controllers');
 var { getCategoria, getCategorias, createCategoria } = require('../controllers/categorias.controllers');
 var { getProducto, obtenerIdPorNombre, getVistaProductos, getNameProductos, createProducto } = require('../controllers/productos.controllers');
 var { getMesa, getMesas, getMesaEstado, createMesa } = require('../controllers/mesas.controllers');
-var { getFactura, getFacturas, createFactura} = require('../controllers/facturas.controllers');
+var { getFactura, getUsuarioFactura, getFacturas, createFactura} = require('../controllers/facturas.controllers');
 var { getPedido_Producto, getPedido_Productos, createPedido_Producto, updatePedido_Producto, deletePedido_Producto} = require('../controllers/pedido.producto.controllers');
 
 // Rutas para la tabla "Pedido"
@@ -21,6 +21,7 @@ router.delete('/pedido/:id', deletePedido);
 router.get('/usuario/:id', getUsuario);
 router.get('/usuarioNombres/:id', getUsuarioNombres);
 router.get('/usuarioRoles/:id', getUsuarioRole);
+router.get('/usuario-pedido/:id', getUsuarioPedido);
 router.get('/usuarios', getUsuarios);
 router.post('/usuario', createUsuario);
 router.post('/auth', authenticateUsuario);
@@ -40,6 +41,7 @@ router.post('/mesa', createMesa);
 // Rutas para la tabla "Factura"
 router.get('/factura/:id', getFactura);
 router.get('/facturas', getFacturas);
+router.get('/usuario-factura/:id', getUsuarioFactura);
 router.post('/factura', createFactura);
 
 // Rutas para la tabla "Cliente"
