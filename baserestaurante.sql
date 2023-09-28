@@ -301,9 +301,9 @@ INSERT INTO Usuario (user_usuario, pass_usuario, nombre_user, apellido_user, id_
 
 -- Usuarios con rol "camarero"
 INSERT INTO Usuario (user_usuario, pass_usuario, nombre_user, apellido_user, id_rol, estado) VALUES
-('nponce', '1111', 'Nayelhy', 'Ponce', 2, 'Disponible'),
-('dnavarrete', '2222', 'Doamel', 'Navarrete', 2, 'Disponible'),
-('scajamarca', '3333', 'Stalin', 'Cajamarca', 2, 'Disponible');
+('nponce', '1111', 'Nayelhy', 'Ponce', 2, 'Activo'),
+('dnavarrete', '2222', 'Doamel', 'Navarrete', 2, 'Activo'),
+('scajamarca', '3333', 'Stalin', 'Cajamarca', 2, 'Inactivo');
 
 -- Ingreso de Mesas
 INSERT INTO Mesa (num_mesa, capacidad, estado) VALUES
@@ -330,42 +330,45 @@ INSERT INTO Cliente (cedula, nombre, apellido, direccion) VALUES
 
 -- Ingreso de Categorias
 INSERT INTO Categoria (nombre, estado) VALUES
-('Entradas', 'Activa'),
-('Platos Principales', 'Activa'),
-('Bebidas', 'Activa'),
-('Postres', 'Activa'),
-('Desayuno', 'Activa');
+('Hamburguesa', 'Activa'),
+('Pizzas', 'Activa'),
+('Sandwich', 'Activa'),
+('Hot Dog', 'Activa'),
+('Bebidas', 'Activa');
 
--- Productos en la categoría "Entradas"
+-- Productos en la categoría "Hamburguesa"
 INSERT INTO Producto (nombre, stock, precio, tiempo, estado, id_categoria) VALUES
-('Ensalada César', 20, 8.99, '00:15:00', 'Disponible', 1),
-('Aros de Cebolla', 30, 5.99, '00:10:00', 'Disponible', 1),
-('Sopa de Tomate', 15, 6.49, '00:12:00', 'Disponible', 1);
+('Hamburguesa simple', 20, 2.50, '00:15:00', 'Disponible', 1),
+('Hamburguesa completa', 20, 4.50, '00:10:00', 'Disponible', 1),
+('Hamburguesa vegana', 20, 3, '00:12:00', 'Disponible', 1),
+('Hamburguesa con papas', 20, 4.25, '00:12:00', 'Disponible', 1);
 
--- Productos en la categoría "Platos Principales"
+-- Productos en la categoría "Pizza"
 INSERT INTO Producto (nombre, stock, precio, tiempo, estado, id_categoria) VALUES
-('Filete de Salmón', 25, 15.99, '00:20:00', 'Disponible', 2),
-('Pollo al Curry', 20, 12.49, '00:18:00', 'Disponible', 2),
-('Lasagna', 18, 10.99, '00:25:00', 'Disponible', 2);
+('Pizza simple', 20, 7, '00:20:00', 'Disponible', 2),
+('Pizza completa', 20, 15.50, '00:18:00', 'Disponible', 2),
+('Pizza con jamon', 20, 10, '00:25:00', 'Disponible', 2),
+('Pizza 4 quesos', 20, 20, '00:25:00', 'Disponible', 2);
+
+-- Productos en la categoría "Sandwich"
+INSERT INTO Producto (nombre, stock, precio, tiempo, estado, id_categoria) VALUES
+('Sandwich simple', 20, 1.50, '00:02:00', 'Disponible', 3),
+('Sandwich completa', 20, 5.50, '00:03:00', 'Disponible', 3),
+('Sandwich con queso', 20, 3, '00:05:00', 'Disponible', 3),
+('Sandwich con papas', 20, 4, '00:05:00', 'Disponible', 3);
+
+-- Productos en la categoría "Hot dog"
+INSERT INTO Producto (nombre, stock, precio, tiempo, estado, id_categoria) VALUES
+('Hot dog simple', 20, 5.99, '00:10:00', 'Disponible', 4),
+('Hot dog completa', 20, 3.49, '00:08:00', 'Disponible', 4),
+('Hot dog con jamon', 20, 6.99, '00:12:00', 'Disponible', 4);
 
 -- Productos en la categoría "Bebidas"
 INSERT INTO Producto (nombre, stock, precio, tiempo, estado, id_categoria) VALUES
-('Agua Mineral', 50, 1.99, '00:02:00', 'Disponible', 3),
-('Refresco de Cola', 40, 2.49, '00:03:00', 'Disponible', 3),
-('Cerveza Artesanal', 30, 4.99, '00:05:00', 'Disponible', 3);
-
--- Productos en la categoría "Postres"
-INSERT INTO Producto (nombre, stock, precio, tiempo, estado, id_categoria) VALUES
-('Tarta de Manzana', 15, 5.99, '00:10:00', 'Disponible', 4),
-('Helado de Chocolate', 20, 3.49, '00:08:00', 'Disponible', 4),
-('Brownie con Helado', 12, 6.99, '00:12:00', 'Disponible', 4);
-
--- Productos en la categoría "Desayuno"
-INSERT INTO Producto (nombre, stock, precio, tiempo, estado, id_categoria) VALUES
-('Café Espresso', 40, 2.99, '00:02:00', 'Disponible', 5),
-('Tostadas con Mermelada', 30, 4.49, '00:05:00', 'Disponible', 5),
-('Huevos Revueltos', 25, 6.99, '00:08:00', 'Disponible', 5),
-('Tigrillo', 20, 5.00, '00:10:00', 'Disponible', 5);
+('Cerveza rubia', 30, 2.99, '00:02:00', 'Disponible', 5),
+('Cerveza con miel', 30, 3.25, '00:02:00', 'Disponible', 5),
+('Cerveza con trigo', 30, 2.99, '00:02:00', 'Disponible', 5),
+('Cerveza negra', 30, 3.50, '00:02:00', 'Disponible', 5);
 
 -- Registros para la tabla Pedido con hora específica.
 -- Los registros no serán necesarios gracias a la función CURRENT_TIMESTAMP
