@@ -15,8 +15,8 @@ CREATE TABLE Usuario (
     nombre_user VARCHAR(100),
     apellido_user VARCHAR(100),
     estado VARCHAR(100),
-    id_rol INT,
     estado VARCHAR(100),
+    id_rol INT,
     FOREIGN KEY (id_rol) REFERENCES Rol(id_rol)
 );
 
@@ -511,6 +511,33 @@ BEGIN
         ELSE
             -- Realizar alguna acción en caso de que no se encuentre el producto
             RAISE EXCEPTION 'El producto con nombre % no existe', nombre_producto_param;
+        END IF;
+    END;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION insertar_cliente_en_factura(
+    id_pedido_param integer,
+    cedula_cliente_param text
+)
+RETURNS void
+AS $$
+BEGIN
+    -- Buscar el id_cliente basado en la cédula del cliente
+    DECLARE
+        cliente_id integer;
+    BEGIN
+        SELECT id_cliente INTO cliente_id
+        FROM Cliente
+        WHERE cedula = cedula_cliente_param;
+        -- Verificar si se encontró un cliente con la cédula dada
+        IF cliente_id IS NOT NULL THEN
+            -- Insertar en la tabla factura
+            INSERT INTO factura (id_pedido, id_cliente)
+            VALUES (id_pedido_param, cliente_id);
+        ELSE
+            -- Realizar alguna acción en caso de que no se encuentre el cliente
+            RAISE EXCEPTION 'El cliente con cédula % no existe', cedula_cliente_param;
         END IF;
     END;
 END;

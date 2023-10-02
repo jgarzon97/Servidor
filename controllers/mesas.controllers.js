@@ -72,11 +72,50 @@ async function createMesa(req, res) {
     }
 }
 
+async function updateMesa(req, res) {
+    const { id } = req.params;
+    const { num_mesa, capacidad, estado } = req.body;
+    const query = 'UPDATE Mesa SET num_mesa=$2, capacidad=$3, estado=$4 WHERE id_mesa=$1';
+    const values = [id, num_mesa, capacidad, estado];
+    try {
+        const client = await pool.connect();
+        const result = await client.query(query, values);
+        client.release();
+        if (result.rowCount > 0) {
+            res.status(200).json({ message: 'Mesa actualizada' });
+        } else {
+            res.status(400).json({ message: 'No se actualizó' });
+        }
+    } catch (err) {
+        res.status(500).json({ error: "Error en el servidor" });
+    }
+}
+
+async function deleteMesa(req, res) {
+    const { id } = req.params;
+    const query = 'DELETE FROM Mesa WHERE id_mesa=$1'
+    const values = [id];
+    try {
+        const client = await pool.connect();
+        const result = await client.query(query, values);
+        client.release();
+        if (result.rowCount > 0) {
+            res.status(200).json({ message: 'Mesa eliminada' });
+        } else {
+            res.status(500).json({ message: 'No existe la eliminada' });
+        }
+    } catch (err) {
+        res.status(500).json({ error: "Error en el servidor" });
+    }
+}
+
 //#endregion
 
 module.exports = {
     getMesa,
     getMesas,
     getMesaEstado,
-    createMesa
+    createMesa,
+    updateMesa,
+    deleteMesa
 };

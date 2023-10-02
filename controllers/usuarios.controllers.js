@@ -100,9 +100,9 @@ async function getUsuarioPedido(req, res) {
 }
 
 async function createUsuario(req, res) {
-    const { user_usuario, pass_usuario, nombre_user, apellido_user, id_rol } = req.body;
-    const query = 'INSERT INTO Usuario (user_usuario, pass_usuario, nombre_user, apellido_user, id_rol) VALUES ($1, $2, $3, $4, $5)';
-    const values = [user_usuario, pass_usuario, nombre_user, apellido_user, id_rol];
+    const { user_usuario, pass_usuario, nombre_user, apellido_user, id_rol, estado } = req.body;
+    const query = 'INSERT INTO Usuario (user_usuario, pass_usuario, nombre_user, apellido_user, id_rol, estado) VALUES ($1, $2, $3, $4, $5, $6)';
+    const values = [user_usuario, pass_usuario, nombre_user, apellido_user, id_rol, estado];
     try {
         const client = await pool.connect();
         const result = await client.query(query, values);

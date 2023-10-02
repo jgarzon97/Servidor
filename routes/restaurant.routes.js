@@ -6,7 +6,7 @@ var { getPedido, getPedidos, createPedido, updatePedido, deletePedido } = requir
 var { getUsuario, getUsuarios, getUsuarioPedido, createUsuario, iniciarSesion, getUsuarioRole, getUsuarioNombres, authenticateUsuario } = require('../controllers/usuarios.controllers');
 var { getCategoria, getCategorias, createCategoria } = require('../controllers/categorias.controllers');
 var { getProducto, obtenerIdPorNombre, getVistaProductos, getNameProductos, createProducto } = require('../controllers/productos.controllers');
-var { getMesa, getMesas, getMesaEstado, createMesa } = require('../controllers/mesas.controllers');
+var { getMesa, getMesas, getMesaEstado, createMesa, updateMesa, deleteMesa } = require('../controllers/mesas.controllers');
 var { getFactura, getUsuarioFactura, getFacturas, createFactura} = require('../controllers/facturas.controllers');
 var { getPedido_Producto, getPedido_Productos, createPedido_Producto, updatePedido_Producto, deletePedido_Producto} = require('../controllers/pedido.producto.controllers');
 
@@ -37,6 +37,8 @@ router.get('/mesa/:id', getMesa);
 router.get('/mesas', getMesas);
 router.get('/mesasDisponible', getMesaEstado);
 router.post('/mesa', createMesa);
+router.put('/mesa/:id', updateMesa);
+router.delete('/mesa/:id', deleteMesa);
 
 // Rutas para la tabla "Factura"
 router.get('/factura/:id', getFactura);
