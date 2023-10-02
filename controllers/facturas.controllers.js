@@ -12,7 +12,7 @@ const pool = new Pool({
 
 async function getFactura(req, res) {
     const { id } = req.params;
-    const query = 'SELECT * FROM Factura WHERE id_factura = $1'
+    const query = 'SELECT * FROM vista_factura WHERE id_factura = $1'
     const values = [id];
     try {
         const client = await pool.connect();
