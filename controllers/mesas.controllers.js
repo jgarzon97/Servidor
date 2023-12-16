@@ -13,7 +13,7 @@ const pool = new Pool({
 async function getMesas(req, res) {
     try {
         const client = await pool.connect();
-        const result = await client.query('SELECT * FROM Mesa');
+        const result = await client.query('SELECT * FROM Mesa ORDER BY estado');
         client.release();
         res.json(result.rows);
     } catch (error) {

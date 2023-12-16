@@ -5,7 +5,8 @@ CREATE DATABASE baserestaurante;
 CREATE TABLE Rol (
     id_rol SERIAL PRIMARY KEY,
     tipo_rol VARCHAR(100),
-    detalles_rol TEXT
+    detalles_rol TEXT,
+    estado VARCHAR(25) DEFAULT 'Activo'
 );
 
 CREATE TABLE Usuario (
@@ -14,8 +15,7 @@ CREATE TABLE Usuario (
     pass_usuario VARCHAR(100) NOT NULL,
     nombre_user VARCHAR(100),
     apellido_user VARCHAR(100),
-    estado VARCHAR(100),
-    estado VARCHAR(100),
+    estado VARCHAR(25) DEFAULT 'Activo',
     id_rol INT,
     FOREIGN KEY (id_rol) REFERENCES Rol(id_rol)
 );
@@ -24,7 +24,7 @@ CREATE TABLE Mesa (
     id_mesa SERIAL PRIMARY KEY,
     num_mesa INT NOT NULL,
     capacidad INT,
-    estado VARCHAR(100)
+    estado VARCHAR(25) DEFAULT 'Disponible'
 );
 
 CREATE TABLE Cliente (
@@ -40,7 +40,7 @@ CREATE TABLE Cliente (
 CREATE TABLE Categoria (
     id_categoria SERIAL PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
-    estado VARCHAR(100)
+    estado VARCHAR(25) DEFAULT 'Activo'
 );
 
 CREATE TABLE Producto (
@@ -49,7 +49,7 @@ CREATE TABLE Producto (
     stock INT CHECK (precio > 0),
     precio DECIMAL(10, 2),
     tiempo TIME,
-    estado VARCHAR(100),
+    estado VARCHAR(25) DEFAULT 'Disponible',
     id_categoria INT,
     FOREIGN KEY (id_categoria) REFERENCES Categoria(id_categoria)
 );
@@ -58,9 +58,9 @@ CREATE TABLE Pedido (
     id_pedido SERIAL PRIMARY KEY,
     fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     hora TIME DEFAULT CURRENT_TIMESTAMP,
+    estado VARCHAR(25) DEFAULT 'Pendiente',
     id_usuario INT,
     id_mesa INT,
-    estado VARCHAR(100) DEFAULT 'Pendiente',
     FOREIGN KEY (id_usuario) REFERENCES Usuario(id_usuario),
     FOREIGN KEY (id_mesa) REFERENCES Mesa(id_mesa)
 );
@@ -78,7 +78,7 @@ CREATE TABLE Factura (
     id_factura SERIAL PRIMARY KEY,
     fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     total DECIMAL(10, 2),
-    estado_de_pago VARCHAR(100) DEFAULT 'Cancelado',
+    estado_de_pago VARCHAR(25) DEFAULT 'Cancelado',
     id_pedido INT,
     id_cliente INT,
     FOREIGN KEY (id_pedido) REFERENCES Pedido(id_pedido),
@@ -296,24 +296,24 @@ INSERT INTO Rol (tipo_rol, detalles_rol) VALUES
 ('camarero', 'Rol para el personal de servicio de mesas.');
 
 -- Usuario con rol "admin"
-INSERT INTO Usuario (user_usuario, pass_usuario, nombre_user, apellido_user, id_rol, estado) VALUES
+INSERT INTO Usuario (user_usuario, pass_usuario, nombre_user, apellido_user, id_rol) VALUES
 ('admin', 'admin123', 'Jorge', 'Garzón', 1);
 
 -- Usuarios con rol "camarero"
-INSERT INTO Usuario (user_usuario, pass_usuario, nombre_user, apellido_user, id_rol, estado) VALUES
-('nponce', '1111', 'Nayelhy', 'Ponce', 2, 'Activo'),
-('dnavarrete', '2222', 'Doamel', 'Navarrete', 2, 'Activo'),
-('scajamarca', '3333', 'Stalin', 'Cajamarca', 2, 'Inactivo');
+INSERT INTO Usuario (user_usuario, pass_usuario, nombre_user, apellido_user, id_rol) VALUES
+('nponce', '1111', 'Nayelhy', 'Ponce', 2),
+('dnavarrete', '2222', 'Doamel', 'Navarrete', 2),
+('scajamarca', '3333', 'Stalin', 'Cajamarca', 2);
 
 -- Ingreso de Mesas
-INSERT INTO Mesa (num_mesa, capacidad, estado) VALUES
-(1, 4, 'Disponible'),
-(2, 6, 'Disponible'),
-(3, 2, 'Disponible'),
-(4, 8, 'Disponible'),
-(5, 4, 'Disponible'),
-(6, 2, 'Disponible'),
-(7, 4, 'Disponible');
+INSERT INTO Mesa (num_mesa, capacidad) VALUES
+(1, 4),
+(2, 6),
+(3, 2),
+(4, 8),
+(5, 4),
+(6, 2),
+(7, 4);
 
 -- Ingreso de Clientes
 INSERT INTO Cliente (cedula, nombre, apellido, direccion) VALUES
@@ -329,46 +329,46 @@ INSERT INTO Cliente (cedula, nombre, apellido, direccion) VALUES
 ('0123456798', 'Elena', 'Fernández', 'Avenida DEF, Ciudad J');
 
 -- Ingreso de Categorias
-INSERT INTO Categoria (nombre, estado) VALUES
-('Hamburguesa', 'Activa'),
-('Pizzas', 'Activa'),
-('Sandwich', 'Activa'),
-('Hot Dog', 'Activa'),
-('Bebidas', 'Activa');
+INSERT INTO Categoria (nombre) VALUES
+('Hamburguesa'),
+('Pizzas'),
+('Sandwich'),
+('Hot Dog'),
+('Bebidas');
 
 -- Productos en la categoría "Hamburguesa"
-INSERT INTO Producto (nombre, stock, precio, tiempo, estado, id_categoria) VALUES
-('Hamburguesa simple', 20, 2.50, '00:15:00', 'Disponible', 1),
-('Hamburguesa completa', 20, 4.50, '00:10:00', 'Disponible', 1),
-('Hamburguesa vegana', 20, 3, '00:12:00', 'Disponible', 1),
-('Hamburguesa con papas', 20, 4.25, '00:12:00', 'Disponible', 1);
+INSERT INTO Producto (nombre, stock, precio, tiempo, id_categoria) VALUES
+('Hamburguesa simple', 20, 2.50, '00:15:00', 1),
+('Hamburguesa completa', 20, 4.50, '00:10:00', 1),
+('Hamburguesa vegana', 20, 3, '00:12:00', 1),
+('Hamburguesa con papas', 20, 4.25, '00:12:00', 1);
 
 -- Productos en la categoría "Pizza"
-INSERT INTO Producto (nombre, stock, precio, tiempo, estado, id_categoria) VALUES
-('Pizza simple', 20, 7, '00:20:00', 'Disponible', 2),
-('Pizza completa', 20, 15.50, '00:18:00', 'Disponible', 2),
-('Pizza con jamon', 20, 10, '00:25:00', 'Disponible', 2),
-('Pizza 4 quesos', 20, 20, '00:25:00', 'Disponible', 2);
+INSERT INTO Producto (nombre, stock, precio, tiempo, id_categoria) VALUES
+('Pizza simple', 20, 7, '00:20:00', 2),
+('Pizza completa', 20, 15.50, '00:18:00', 2),
+('Pizza con jamon', 20, 10, '00:25:00', 2),
+('Pizza 4 quesos', 20, 20, '00:25:00', 2);
 
 -- Productos en la categoría "Sandwich"
-INSERT INTO Producto (nombre, stock, precio, tiempo, estado, id_categoria) VALUES
-('Sandwich simple', 20, 1.50, '00:02:00', 'Disponible', 3),
-('Sandwich completa', 20, 5.50, '00:03:00', 'Disponible', 3),
-('Sandwich con queso', 20, 3, '00:05:00', 'Disponible', 3),
-('Sandwich con papas', 20, 4, '00:05:00', 'Disponible', 3);
+INSERT INTO Producto (nombre, stock, precio, tiempo, id_categoria) VALUES
+('Sandwich simple', 20, 1.50, '00:02:00', 3),
+('Sandwich completa', 20, 5.50, '00:03:00', 3),
+('Sandwich con queso', 20, 3, '00:05:00', 3),
+('Sandwich con papas', 20, 4, '00:05:00', 3);
 
 -- Productos en la categoría "Hot dog"
-INSERT INTO Producto (nombre, stock, precio, tiempo, estado, id_categoria) VALUES
-('Hot dog simple', 20, 5.99, '00:10:00', 'Disponible', 4),
-('Hot dog completa', 20, 3.49, '00:08:00', 'Disponible', 4),
-('Hot dog con jamon', 20, 6.99, '00:12:00', 'Disponible', 4);
+INSERT INTO Producto (nombre, stock, precio, tiempo, id_categoria) VALUES
+('Hot dog simple', 20, 5.99, '00:10:00', 4),
+('Hot dog completa', 20, 3.49, '00:08:00', 4),
+('Hot dog con jamon', 20, 6.99, '00:12:00', 4);
 
 -- Productos en la categoría "Bebidas"
-INSERT INTO Producto (nombre, stock, precio, tiempo, estado, id_categoria) VALUES
-('Cerveza rubia', 30, 2.99, '00:02:00', 'Disponible', 5),
-('Cerveza con miel', 30, 3.25, '00:02:00', 'Disponible', 5),
-('Cerveza con trigo', 30, 2.99, '00:02:00', 'Disponible', 5),
-('Cerveza negra', 30, 3.50, '00:02:00', 'Disponible', 5);
+INSERT INTO Producto (nombre, stock, precio, tiempo, id_categoria) VALUES
+('Cerveza rubia', 30, 2.99, '00:02:00', 5),
+('Cerveza con miel', 30, 3.25, '00:02:00', 5),
+('Cerveza con trigo', 30, 2.99, '00:02:00', 5),
+('Cerveza negra', 30, 3.50, '00:02:00', 5);
 
 -- Registros para la tabla Pedido con hora específica.
 -- Los registros no serán necesarios gracias a la función CURRENT_TIMESTAMP
