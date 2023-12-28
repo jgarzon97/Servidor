@@ -542,3 +542,9 @@ BEGIN
     END;
 END;
 $$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE VIEW Detalles_Producto AS
+SELECT PP.id_pedido, PP.id_producto, P.precio, PP.cantidad, PP.detalle
+FROM Pedido_Producto PP
+INNER JOIN Producto P ON PP.id_producto = P.id_producto;
+

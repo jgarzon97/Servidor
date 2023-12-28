@@ -8,7 +8,7 @@ var { getCategoria, getCategorias, createCategoria } = require('../controllers/c
 var { getProducto, obtenerIdPorNombre, getVistaProductos, getNameProductos, createProducto } = require('../controllers/productos.controllers');
 var { getMesa, getMesas, getMesaEstado, createMesa, updateMesa, deleteMesa } = require('../controllers/mesas.controllers');
 var { getFactura, getUsuarioFactura, getFacturas, createFactura} = require('../controllers/facturas.controllers');
-var { getPedido_Producto, getPedido_Productos, createPedido_Producto, updatePedido_Producto, deletePedido_Producto} = require('../controllers/pedido.producto.controllers');
+var { getPedido_Producto, getPedido_Productos, getDetalles_Productos, createPedido_Producto, updatePedido_Producto, deletePedido_Producto} = require('../controllers/pedido.producto.controllers');
 
 // Rutas para la tabla "Pedido"
 router.get('/pedido/:id', getPedido);
@@ -61,6 +61,7 @@ router.post('/producto', createProducto);
 // Rutas para la tabla "Pedido_Producto"
 router.get('/pedidoProducto/:id', getPedido_Producto);
 router.get('/pedidoProductos', getPedido_Productos);
+router.get('/detallesProductos/:id', getDetalles_Productos);
 router.post('/pedidoProducto', createPedido_Producto);
 router.put('/pedidoProducto/:id', updatePedido_Producto);
 router.delete('/pedidoProducto/:id', deletePedido_Producto);

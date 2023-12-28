@@ -41,6 +41,26 @@ async function getPedido_Productos(req, res) {
     }
 }
 
+// Vista personalizada con la tabla Productos y Pedido_Producto
+async function getDetalles_Productos(req, res) {
+    const { id } = req.params;
+    const query = 'SELECT * FROM Detalles_Producto WHERE id_pedido = $1';
+    const values = [id];
+    try {
+        const client = await pool.connect();
+        const result = await client.query(query, values);
+        client.release();
+        res.status(200);
+        if (result.rowCount > 0) {
+            res.json(result.rows);
+        } else {
+            res.status(500).json({ message: 'No hay registros para este pedido' });
+        }
+    } catch (err) {
+        res.status(500).json({ error: "Error en el servidor" });
+    }
+}
+
 // USANDO LA FUNCION insertar_producto_en_pedido
 async function createPedido_Producto(req, res) {
     const { id_pedido, id_producto, cantidad, detalle } = req.body;
@@ -111,6 +131,7 @@ async function deletePedido_Producto(req, res) {
 module.exports = {
     getPedido_Producto,
     getPedido_Productos,
+    getDetalles_Productos,
     createPedido_Producto,
     updatePedido_Producto,
     deletePedido_Producto
