@@ -62,29 +62,48 @@ async function getDetalles_Productos(req, res) {
 }
 
 // USANDO LA FUNCION insertar_producto_en_pedido
+// async function createPedido_Producto(req, res) {
+//     const { id_pedido, id_producto, cantidad, detalle } = req.body;
+//     const query = 'SELECT insertar_producto_en_pedido($1, $2, $3, $4)';
+//     const values = [id_pedido, id_producto, cantidad, detalle];
+//     try {
+//         const client = await pool.connect();
+//         await client.query('BEGIN'); // Iniciar una transacción
+//         const result = await client.query(query, values);
+
+//         // Verificar si ocurrió un error en la función del servidor de la base de datos
+//         if (result.rows.length === 1 && result.rows[0].insertar_producto_en_pedido === null) {
+//             await client.query('ROLLBACK'); // Deshacer la transacción en caso de error
+//             res.status(400).json({ message: 'No se guardaron los detalles del Pedido' });
+//         } else {
+//             await client.query('COMMIT'); // Confirmar la transacción exitosa
+//             res.status(200).json({ message: 'Se guardaron los detalles del Pedido' });
+//         }
+
+//         client.release();
+//     } catch (err) {
+//         res.status(500).json({ error: "Error en el servidor" });
+//     }
+// }
+
 async function createPedido_Producto(req, res) {
     const { id_pedido, id_producto, cantidad, detalle } = req.body;
-    const query = 'SELECT insertar_producto_en_pedido($1, $2, $3, $4)';
+    const query = 'INSERT INTO Pedido_Producto (id_pedido, id_producto, cantidad, detalle) VALUES ($1, $2, $3, $4)';
     const values = [id_pedido, id_producto, cantidad, detalle];
     try {
         const client = await pool.connect();
-        await client.query('BEGIN'); // Iniciar una transacción
         const result = await client.query(query, values);
-
-        // Verificar si ocurrió un error en la función del servidor de la base de datos
-        if (result.rows.length === 1 && result.rows[0].insertar_producto_en_pedido === null) {
-            await client.query('ROLLBACK'); // Deshacer la transacción en caso de error
-            res.status(400).json({ message: 'No se guardaron los detalles del Pedido' });
-        } else {
-            await client.query('COMMIT'); // Confirmar la transacción exitosa
-            res.status(200).json({ message: 'Se guardaron los detalles del Pedido' });
-        }
-
         client.release();
+        if (result.rowCount > 0) {
+            res.status(200).json({ message: 'Se guardaron con éxito los detalles' });
+        } else {
+            res.status(400).json({ message: 'No se guardaron los detalles' });
+        }
     } catch (err) {
         res.status(500).json({ error: "Error en el servidor" });
     }
 }
+
 
 // Asegúrate de exportar la función createPedido_Producto
 

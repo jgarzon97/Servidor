@@ -13,7 +13,7 @@ const pool = new Pool({
 async function getPedidos(req, res) {
     try {
         const client = await pool.connect();
-        const result = await client.query('SELECT * FROM Pedido');
+        const result = await client.query('SELECT * FROM Pedido ORDER BY estado DESC');
         client.release();
         res.json(result.rows);
     } catch (error) {
