@@ -548,3 +548,7 @@ SELECT PP.id_pedido, PP.id_producto, P.precio, PP.cantidad, PP.detalle
 FROM Pedido_Producto PP
 INNER JOIN Producto P ON PP.id_producto = P.id_producto;
 
+CREATE OR REPLACE VIEW usuario_roles AS
+SELECT u.id_usuario, u.user_usuario, u.pass_usuario, u.nombre_user, u.apellido_user, u.estado, r.tipo_rol
+FROM Usuario u
+INNER JOIN rol r ON u.id_rol = r.id_rol;

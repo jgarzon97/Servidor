@@ -2,6 +2,7 @@ const { Router } = require('express');
 const router = new Router();
 
 var { getCliente, getClientes, createCliente} = require('../controllers/clientes.controllers');
+var { getRoles } = require('../controllers/roles.controllers');
 var { getPedido, getPedidos, createPedido, updatePedido, deletePedido } = require('../controllers/pedidos.controllers');
 var { getUsuario, getUsuarios, getUsuarioPedido, createUsuario, iniciarSesion, getUsuarioRole, getUsuarioNombres, authenticateUsuario } = require('../controllers/usuarios.controllers');
 var { getCategoria, getCategorias, createCategoria } = require('../controllers/categorias.controllers');
@@ -16,6 +17,9 @@ router.get('/pedidos', getPedidos);
 router.post('/pedido', createPedido);
 router.put('/pedido/:id', updatePedido);
 router.delete('/pedido/:id', deletePedido);
+
+// Rutas para la tabla "Rol"
+router.get('/roles/', getRoles);
 
 // Rutas para la tabla "Usuario"
 router.get('/usuario/:id', getUsuario);
