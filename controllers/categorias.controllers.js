@@ -38,7 +38,7 @@ async function getCategorias(req, res) {
     } catch (error) {
         console.error('Error al obtener las categorias:', error);
         res.status(500).json({ error: "Error en el servidor" });
-    }
+    }   
 }
 
 async function createCategoria(req, res) {
