@@ -42,9 +42,9 @@ async function getCategorias(req, res) {
 }
 
 async function createCategoria(req, res) {
-    const { nombre, estado } = req.body;
-    const query = 'INSERT INTO Categoria (nombre, estado) VALUES ($1, $2)';
-    const values = [nombre, estado];
+    const { nombre } = req.body;
+    const query = 'INSERT INTO Categoria (nombre) VALUES ($1)';
+    const values = [nombre];
     try {
         const client = await pool.connect();
         const result = await client.query(query, values);
